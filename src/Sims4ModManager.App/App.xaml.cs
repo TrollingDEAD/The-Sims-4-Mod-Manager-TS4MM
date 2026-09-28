@@ -26,7 +26,7 @@ public partial class App : Application
         app.Run();
     }
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, args) => Log(args.ExceptionObject as Exception);
@@ -45,6 +45,19 @@ public partial class App : Application
         Services.UiTranslator.Enable();
 
         base.OnStartup(e);
+
+        // MainWindow's construction scans the whole Mods folder synchronously and can take a while;
+        // without a splash shown first, the app looks like it failed to launch during that time. The
+        // splash's ProgressRing keeps spinning through that block - WPF animates simple render
+        // transforms like this independently of the UI thread.
+        var splash = new SplashWindow();
+        splash.Show();
+        await Dispatcher.Yield(DispatcherPriority.Render);
+
+        var main = new MainWindow();
+        MainWindow = main; // splash was shown first and would otherwise become the app's MainWindow
+        main.Show();
+        splash.Close();
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
