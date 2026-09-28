@@ -193,6 +193,10 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Label of the language button: the language it switches to.</summary>
     public string OtherLanguageLabel => L.IsGerman ? "EN" : "DE";
 
+    /// <summary>App version shown in the title bar (from the assembly version, e.g. "v1.0.1").</summary>
+    public string AppVersion { get; } =
+        "v" + (System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0");
+
     [RelayCommand]
     private async Task ToggleLanguageAsync()
     {

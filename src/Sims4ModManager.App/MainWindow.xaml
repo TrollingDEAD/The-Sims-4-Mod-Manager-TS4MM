@@ -32,6 +32,8 @@
             </ui:TitleBar.Icon>
             <ui:TitleBar.TrailingContent>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="{Binding AppVersion}" Style="{StaticResource CaptionText}" Opacity="0.6"
+                           VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Sims 4 Mod Manager – Version" />
                 <!-- Global search: mods, creators, notes, in-game names, library, saves -->
                 <Grid Width="320" Margin="0,0,8,0" DataContext="{Binding Search}">
                     <ui:TextBox x:Name="GlobalSearchBox" PlaceholderText="Überall suchen … (Strg+K)" Icon="{ui:SymbolIcon Search24}"

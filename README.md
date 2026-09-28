@@ -3,6 +3,9 @@
 Ein Mod-Manager für Die Sims 4: Mods aktivieren/deaktivieren, Metadaten anzeigen,
 Ressourcenkonflikte zwischen Packages erkennen und Mod-Auswahlen als Profile speichern.
 
+Änderungen an diesem Projekt stehen in [CHANGELOG.md](CHANGELOG.md); die aktuelle Version zeigt
+die App selbst oben in der Titelleiste an.
+
 ## Projektstruktur
 
 - `src/Sims4ModManager.Core` – Kernlogik (kein UI-Bezug): Scannen des Mods- und Tray-Ordners,
