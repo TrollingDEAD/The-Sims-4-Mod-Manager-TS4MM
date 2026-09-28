@@ -17,6 +17,7 @@
         <KeyBinding Key="Z" Modifiers="Control" Command="{Binding History.UndoLatestCommand}" />
         <KeyBinding Key="F" Modifiers="Control" Command="{Binding FocusSearchCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
         <KeyBinding Key="K" Modifiers="Control" Command="{Binding FocusGlobalSearchCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+        <KeyBinding Key="F1" Command="{Binding ShowShortcutsCommand}" />
     </Window.InputBindings>
 
     <Grid>
@@ -81,6 +82,10 @@
                 <ui:Button Appearance="Transparent" BorderThickness="0" Padding="8,4" Margin="0,0,2,0"
                            Click="OpenSetup_Click" ToolTip="Einrichtungsassistent öffnen">
                     <ui:SymbolIcon Symbol="Wand24" />
+                </ui:Button>
+                <ui:Button Appearance="Transparent" BorderThickness="0" Padding="8,4" Margin="0,0,2,0"
+                           Command="{Binding ShowShortcutsCommand}" ToolTip="Tastenkürzel anzeigen (F1)">
+                    <ui:SymbolIcon Symbol="QuestionCircle24" />
                 </ui:Button>
                 <ui:Button Appearance="Transparent" BorderThickness="0" Padding="8,4" Margin="0,0,2,0"
                            Command="{Binding ToggleLanguageCommand}" ToolTip="Sprache wechseln / Switch language">

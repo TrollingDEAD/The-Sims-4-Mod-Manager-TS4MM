@@ -203,6 +203,15 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ToggleTheme() => IsDarkTheme = !IsDarkTheme;
 
+    [RelayCommand]
+    private Task ShowShortcutsAsync() => _dialogs.ShowAsync(L.T("Tastenkürzel"), L.T(
+        "F5 – Mods neu einlesen\n" +
+        "Strg+Z – Letzte Aktion rückgängig machen\n" +
+        "Strg+F – Mods durchsuchen (im Mods-Tab)\n" +
+        "Strg+K – Überall suchen (Mods, Bibliothek, Spielstände)\n" +
+        "Esc – aktives Suchfeld leeren\n" +
+        "Enter – bestes Ergebnis der Überall-Suche öffnen"));
+
     /// <summary>Label of the language button: the language it switches to.</summary>
     public string OtherLanguageLabel => L.IsGerman ? "EN" : "DE";
 
