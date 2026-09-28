@@ -2,3 +2,13 @@ bin/
 obj/
 *.user
 .vs/
+.idea/
+*.suo
+publish/
+Releases/
+*.nupkg
+*.vsix
+
+# Velopack local packaging output
+*-full.nupkg
+*-delta.nupkg

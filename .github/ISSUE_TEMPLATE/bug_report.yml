@@ -1,0 +1,70 @@
+name: Bug report
+description: Something in the app doesn't work as expected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please check [existing issues](https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/issues) first to avoid a duplicate.
+        For a security vulnerability, use [private reporting](https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/security) instead of this form.
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown in the title bar (e.g. "v1.1.0").
+      placeholder: v1.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the "Mods" tab
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: >
+        If the app crashed or showed an error, paste the relevant part of
+        `%AppData%\Sims4ModManager\error.log`. Please redact anything personal (file paths with
+        your Windows username are fine, mod/creator names you'd rather not share are not needed).
+      render: text
+
+  - type: checkboxes
+    id: mods-folder
+    attributes:
+      label: Mods folder location
+      description: Select all that apply - useful for folder-detection or file-locking bugs.
+      options:
+        - label: My Mods folder is inside OneDrive (or another synced folder)
+        - label: I moved the Documents folder to a non-default location

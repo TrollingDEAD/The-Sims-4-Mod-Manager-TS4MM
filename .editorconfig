@@ -1,0 +1,36 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.csproj]
+indent_size = 2
+
+[*.cs]
+# File-scoped namespaces, Allman braces, `var` where the type is obvious - matches the existing codebase.
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_new_line_before_open_brace = all
+csharp_var_for_built_in_types = true:suggestion
+csharp_var_when_type_is_apparent = true:suggestion
+csharp_var_elsewhere = true:suggestion
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_prefer_auto_properties = true:suggestion
+dotnet_sort_system_directives_first = true
+
+# Nullable reference types are enabled project-wide; treat warnings as visible, not as build breaks here.
+dotnet_diagnostic.CS8600.severity = suggestion
+dotnet_diagnostic.CS8602.severity = suggestion
+dotnet_diagnostic.CS8603.severity = suggestion

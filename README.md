@@ -1,184 +1,289 @@
+<div align="center">
+
 # Sims 4 Mod Manager
 
-Ein Mod-Manager für Die Sims 4: Mods aktivieren/deaktivieren, Metadaten anzeigen,
-Ressourcenkonflikte zwischen Packages erkennen und Mod-Auswahlen als Profile speichern.
+**An all-in-one mod manager for The Sims 4** — enable/disable mods, detect and resolve resource
+conflicts between packages, manage your Tray library, diagnose crashes, and keep everything backed
+up and reversible.
 
-Änderungen an diesem Projekt stehen in [CHANGELOG.md](CHANGELOG.md); die aktuelle Version zeigt
-die App selbst oben in der Titelleiste an.
+[![CI](https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/actions/workflows/ci.yml/badge.svg)](https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM)](https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM)](LICENSE)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D6)](#installation)
 
-## Projektstruktur
+[Installation](#installation) ·
+[Features](#features) ·
+[Building from source](#building-from-source) ·
+[Contributing](#contributing) ·
+[Changelog](CHANGELOG.md)
 
-- `src/Sims4ModManager.Core` – Kernlogik (kein UI-Bezug): Scannen des Mods- und Tray-Ordners,
-  DBPF-Parsing (`.package`-Dateien), Aktivieren/Deaktivieren, Konflikterkennung, Profile.
-- `src/Sims4ModManager.App` – WPF-Oberfläche (.NET 8, MVVM mit CommunityToolkit.Mvvm).
-- `tests/Sims4ModManager.Core.Tests` – xUnit-Tests für die Kernlogik.
+</div>
 
-## Funktionsweise
+---
 
-- **Erkennung:** Der Mods-Ordner wird automatisch gesucht: in allen Dokumente-Ordnern (auch
-  umgeleitet oder in OneDrive, inkl. „Dokumente“) unter `Electronic Arts\<Sims 4-Ordner>\Mods`.
-  Der Sims 4-Ordner wird unabhängig von der Spielsprache erkannt („The/Die/Les Sims 4“ …, notfalls
-  an typischen Spieldateien wie `Options.ini` oder `saves`). Bei mehreren Installationen gewinnt die
-  mit Mods-Ordner und zuletzt gespielte. Wird versehentlich der Sims 4-Ordner statt `Mods` gewählt,
-  wird das korrigiert. Mod-Dateien, die neben statt in `Mods` liegen (und vom Spiel ignoriert
-  werden), werden als Warnung angezeigt.
-- **Mods:** Jede lose Datei bzw. jeder Ordner auf oberster Ebene im Mods-Ordner zählt als
-  ein Mod. Mehrdateien-Mods (z. B. CC-Packs mit mehreren `.package`-Dateien) werden als
-  Einheit ein-/ausgeschaltet.
-- **Aktivieren/Deaktivieren:** Erfolgt reversibel durch Anhängen/Entfernen der Endung
-  `.disabled` an die Dateiendung – Dateien werden nicht verschoben, Ordnerstruktur bleibt
-  erhalten.
-- **Konflikterkennung:** Liest den DBPF-Index jeder aktiven `.package`-Datei (Type/Group/Instance,
-  gelöschte Einträge werden ignoriert) sowie die Python-Module jeder `.ts4script`-Datei und meldet
-  Ressourcen bzw. Module, die von mehr als einem Mod bereitgestellt werden.
-  - Byte-identische Duplikate (auch unterschiedlich komprimiert) gelten nicht als Konflikt.
-  - Konflikte werden pro Gruppe betroffener Mods zusammengefasst, mit Ressourcentyp und
-    Schweregrad (Hoch: Tuning/SimData/CAS-Teile/Objekte/Skripte, Mittel: Meshes/Texturen/Strings,
-    Niedrig: Vorschaubilder).
-  - Nicht lesbare Dateien werden als Warnung angezeigt statt stillschweigend übergangen.
-- **Profile:** Momentaufnahmen der aktivierten Mods, gespeichert unter
-  `%AppData%\Sims4ModManager\profiles` (inkl. zugehörigem Mods-Ordner). Beim Anwenden werden
-  nicht mehr vorhandene Mods gemeldet.
-- **Übersicht (Gesundheitscheck):** Startseite mit Spielversion, Update-Erkennung, den Mod-Schaltern
-  des Spiels (`Options.ini`: Mods/CC, Skript-Mods, CC-Liste beim Start), Cache-Status und allen
-  gefundenen Problemen samt automatischer Behebung („Alle sicheren beheben“). Geprüft wird u. a.:
-  - Sims-2/3-Packages (DBPF 1.x/2.0), beschädigte und leere Dateien, abgebrochene Downloads
-  - `.ts4script` tiefer als 1 und `.package` tiefer als 5 Unterordner, Pfade über 259 Zeichen
-  - Readmes/Bilder im Mods-Ordner, leere Ordner, per Hand deaktivierte Mods (`.packageOFF` …),
-    fehlende oder unvollständige `Resource.cfg`, Sonderzeichen
-  - OneDrive-Sync und Mods, die nur in der Cloud liegen
-  - veralteter Spiel-Cache; nach Spiel-Updates die gefährdeten Skript- und Gameplay-Mods
-    („Sicherer Modus“ deaktiviert sie vorübergehend)
-  Aussortierte Dateien werden nach `Mods (aussortiert)` neben dem Mods-Ordner verschoben, nie gelöscht.
-  Außerdem: Mod-Liste als Text (Discord/Foren) oder CSV exportieren bzw. kopieren. Läuft das Spiel,
-  warnt die App vor Aktionen, die Dateien ändern.
-- **Konfliktlösung:** Zu jeder Konfliktgruppe gibt es Lösungsvorschläge (Tab „Lösungen“), die auf
-  Dateiebene arbeiten und Mods möglichst behalten:
-  - *Doppelt installierte Datei* → ältere Kopie deaktivieren
-  - *Ältere Version* (v1/v2, „Fixed“, „Update“, „(1)“ …) → ältere Version deaktivieren
-  - *HQ- und NonHQ-Variante* → NonHQ deaktivieren (Alternative: HQ)
-  - *In MERGED-Set enthalten* (alle Ressourcen stecken schon in einem anderen Package) → Einzeldatei deaktivieren
-  - *Echte Überschreibung* zwischen verschiedenen Mods → nur die umstrittenen Ressourcen aus dem
-    Package des Verlierers entfernen (Package wird neu geschrieben, der Rest des Mods bleibt);
-    Standard-Gewinner ist die neuere Datei, die Gegenrichtung wird als Alternative angeboten
-  - *Skript-Überschneidung* → ältere `.ts4script` deaktivieren
-  „Sichere Lösungen“ wendet alle reinen Deaktivierungen von Duplikaten in einem Schritt an.
-  Das Merge-Manifest von Sims 4 Studio (Typ `7FB6AD8A`) zählt nicht als Konflikt.
-- **Verlauf & Sicherung:** Jede Aktion, die Dateien ändert (Aktivieren/Deaktivieren, Profile,
-  Installationen, Aufräumen, Entfernen, Konfliktlösungen), wird in
-  `%AppData%\Sims4ModManager\backups\journal` protokolliert; überschriebene oder entfernte Dateien
-  werden vorher kopiert. Im Tab „Verlauf“ (oder mit `Strg+Z`) lässt sich jede Aktion zurücknehmen;
-  Dateien, die seitdem erneut geändert wurden, werden dabei nie überschrieben. Die letzten 100
-  Aktionen bleiben erhalten.
-- **Bibliothek (Tray):** Eigener Tab für den `Tray`-Ordner (lokale Bibliothek: Haushalte,
-  Grundstücke, Räume).
-  - Zeigt Name, Ersteller, Beschreibung, Sims, Grundstücksgröße, Tags und Datum aus den
-    `.trayitem`-Dateien (Protobuf) und fasst alle zusammengehörigen Dateien eines Eintrags
-    zusammen (inkl. Sim-Porträts).
-  - Meldet unvollständige Einträge (fehlende `.trayitem`/`.householdbinary`/`.blueprint`/`.room`).
-  - **CC-Erkennung:** findet die Mod-Dateien, deren CAS-Teile, Objekte und Bauelemente ein
-    Eintrag verwendet – auch deaktivierte, die sich per Klick aktivieren lassen. Die Mod-Liste
-    zeigt umgekehrt, in wie vielen Bibliothekseinträgen ein Mod verwendet wird.
-  - **Export** eines Eintrags samt CC als Ordner oder ZIP (`Tray\` + `Mods\`).
-  - **Downloads installieren** (ZIP/RAR/7z, auch verschachtelt, Ordner oder Einzeldateien):
-    Tray-Dateien unverändert und flach nach `Tray`, `.package`/`.ts4script` nach
-    `Mods\<Download>\`. Bereits vorhandene (auch anderswo in `Mods`) und gleichnamige andere
-    Dateien werden erkannt und nicht überschrieben.
-  - **Aufräumen:** Tray-Dateien in `Mods`, Mods in `Tray`, Tray-Unterordner, umbenannte
-    Tray-Dateien und nicht entpackte Archive werden gemeldet und auf Wunsch verschoben.
-  - **Entfernen** verschiebt Einträge in `%AppData%\Sims4ModManager\backups` (wiederherstellbar
-    über „Ordner installieren“); **Sicherung** packt Tray + Saves (optional Mods) in ein ZIP.
-  - Vorschaubilder (`.hhi`/`.sgi`/`.bpi`/`.rmi`) werden nicht angezeigt – ihr Format ist
-    verschlüsselt und nicht dokumentiert.
-- **Spielen:** Der Button „Spielen“ (oben rechts und in der Übersicht) wendet optional ein Profil
-  an, leert den Cache, sichert auf Wunsch die Spielstände und startet `TS4_x64.exe` (Installation
-  per Registry/Steam gefunden). Nach dem Beenden wird neu eingelesen und auf neue
-  Fehlerprotokolle hingewiesen.
-- **Diagnose:** Liest `lastException*`, `lastUIException*`, `lastCrash*` und MC-Command-Center-
-  bzw. Better-Exceptions-Berichte, fasst gleiche Fehler zusammen und nennt den verursachenden
-  Mod (Pfad der `.ts4script` im Traceback bzw. Python-Modulname), mit Button zum Deaktivieren.
-  Fehler aus älteren Spielversionen werden markiert und lassen sich aufräumen.
-  Der **50/50-Assistent** teilt die aktiven Mods schrittweise in Hälften, bis der Verursacher
-  eines Problems gefunden ist; der Fortschritt übersteht einen Neustart der App
-  (`bisect.json`), alle Umschaltungen laufen über den Verlauf.
-- **Spielstände:** Zeigt alle Saves mit Haushalten, Sims, Grundstücken, Spielversion und dem
-  verwendeten CC (auch deaktiviertem). Vor dem Deaktivieren eines Mods, den ein Spielstand
-  nutzt, wird nachgefragt. Saves lassen sich einzeln sichern und wiederherstellen
-  (`backups\saves`).
-- **Downloads & Sicherheit:** Neue Sims-Downloads im Download-Ordner werden erkannt und per
-  Banner zur Installation angeboten (abschaltbar). Skript-Mods werden auf gefährliche Muster
-  (eingebettete `.exe`, Prozessstart, verschleierter Code) geprüft – auch vor der Installation.
-  Fehlende oder deaktivierte Bibliotheken (S4CL, XML Injector, Lot 51 Core) werden gemeldet.
-- **Katalog:** Jede Mod-Datei als Kachel mit dem Vorschaubild aus dem Package (inkl. Transparenz),
-  Namen aus den Stringtabellen, Kategorie (CAS · Haare/Kleidung/Make-up …, Objekte, Bauelemente,
-  Gameplay, Skripte, Slider, Posen, Ersatztexturen), Ersteller, Altersstufen und Geschlecht aus den
-  CAS-Teilen. Filter nach Kategorie, Alter, Geschlecht; Ergebnisse werden in `cache\` zwischengespeichert.
-- **Sortieren:** Ordnet Mods mit Vorschau in Sammelordner wie `CAS - Haare\<Ersteller>`, `Objekte` oder
-  `Skript-Mods` ein (Tiefenregeln des Spiels werden eingehalten, Skript-Mod-Ordner bleiben). Sammelordner
-  tragen die Markierung `.s4mm-sammlung`; jeder Mod darin bleibt einzeln schaltbar und behält seine ID.
-  Eigene Ordner lassen sich ebenfalls „als Sammelordner“ markieren. Alles über den Verlauf rückgängig.
-- **Details & Notizen:** Im Tab „Mods“ zeigt „Details“ Vorschau, Kategorie, Ersteller und Dateien; dazu
-  Notiz, „Warum installiert?“, Tags sowie Download- und Ersteller-Link (`notes.json`, außerhalb des Mods-Ordners).
-- **Speicherplatz:** Größe nach Kategorie und Ersteller, größte Mods, byte-identische Duplikate (überzählige
-  Kopien entfernbar) und unkomprimiert gespeicherte Daten („Komprimieren …“ komprimiert sie verlustfrei).
-- **Spiel (Spielindex):** Findet die Installation (Registry, EA App, Steam oder manuell) und liest die
-  Ressourcen-Indizes aller Spiel-Packages (Basisspiel, `Delta`-Patches, alle Packs; ohne Stringtabellen) –
-  gecacht in `cache\gameindex.bin`, neu aufgebaut nach Updates oder neuen Packs. Damit:
-  - **Default Replacements & Tuning-Overrides:** Mods, die Ressourcen des Spiels ersetzen (Symbol und Filter
-    „Ersetzt Spielinhalte“ in der Mod-Liste). Spiel-Tuning steckt in einem Binärblock; Tuning-Overrides werden
-    deshalb an SimData-Schlüsseln bzw. an EA-typischer ID und Name erkannt (Schätzung). Tuning-Overrides, die
-    älter als das letzte Spiel-Update sind, meldet die Übersicht.
-  - **Recolors ohne Mesh:** CAS-Teile (GEOM-Verweise) und Objekte (Modell-Verweis der OBJD), deren Mesh weder
-    ein Mod noch das Spiel enthält – oder nur ein deaktivierter Mod.
-  - **Bibliothek:** benötigte Packs und fehlender CC pro Haushalt (die Verweis-Felder werden aus den Daten
-    gelernt). Grundstücke und Räume speichert das Spiel komprimiert – dort nur „mindestens“-Angaben.
-- **Package-Werkzeuge** (Tab „Mods“ → „Inhalt“): Ressourcen nach Typ, „Optimieren“ (doppelte Einträge
-  entfernen, verlustfrei komprimieren), „Zerlegen“ für zusammengeführte Packages. **Zusammenführen …** fasst
-  CC-Mods zu einem Package zusammen; die Liste der Originaldateien wird im Format von Sims 4 Studio
-  gespeichert (`0x7FB6AD8A`), sodass beide Programme solche Packages zerlegen können.
-- **Updates (CurseForge):** Erkennt CurseForge-Mods am Datei-Fingerabdruck (MurmurHash2 wie CurseForge,
-  gecacht in `cache\fingerprints.json`), zeigt neuere Releases und installiert sie über den Verlauf
-  (rückgängig machbar). Braucht einen eigenen, kostenlosen API-Schlüssel (console.curseforge.com); er wird
-  per Windows-DPAPI verschlüsselt in den Einstellungen gespeichert.
-- **App-Updates:** Die App prüft beim Start automatisch im Hintergrund, ob auf GitHub eine neuere
-  Version vorliegt, und zeigt dann einen Button in der Titelleiste zum Herunterladen und
-  Installieren (kein manueller Neu-Download/Reinstall nötig). Details zum Release-Prozess stehen in
-  [docs/Release.md](docs/Release.md).
-- **Was hat sich geändert?** (Tab „Verlauf“): Vergleich mit dem täglichen Stand bzw. dem Stand vor dem
-  letzten Spielstart – neue, entfernte, geänderte, (de)aktivierte und verschobene Dateien.
-- **Globale Suche** (`Strg+K`): Mods (Name, Ersteller, Kategorie, Notizen, Tags, Namen im Spiel), Bibliothek
-  und Spielstände.
-- **Automatische Sicherung:** vor jedem Spielstart und/oder täglich/wöchentlich beim App-Start; pro Slot
-  werden nur die neuesten automatischen Sicherungen behalten. Die Bibliothek wird inkrementell gespiegelt
-  (`backups\tray`, ältere Stände 30 Tage).
-- **Einrichtungsassistent** beim ersten Start (Sprache, Mods-Ordner inkl. OneDrive-Hinweis, Spielschalter,
-  erste Sicherung, Überblick); später über das Zauberstab-Symbol.
-- **Sprache:** Deutsch oder Englisch (Button „EN“/„DE“ in der Titelleiste, Neustart). Deutsch ist die
-  Quellsprache; die Übersetzungen stehen in `src/Sims4ModManager.Core/Localization/en.json`.
-- **Oberfläche:** Fluent-Design (WPF-UI) mit dunklem Theme (umschaltbar auf hell über das
-  Symbol in der Titelleiste, wird gespeichert), Icons und Tooltips an allen Bedienelementen,
-  Suche und Filter in der Mod-Liste (u. a. „Mit Konflikten“, „In Bibliothek verwendet“),
-  Warnsymbol an Mods mit Konflikten, abgeblendete deaktivierte Mods.
-  Tastenkürzel: `F5` aktualisieren, `Strg+F` Suche, `Enter` im Profilnamen speichert,
-  Doppelklick auf einen Bibliothekseintrag zeigt ihn im Explorer.
-- **Persistenz:** Einstellungen (`%AppData%\Sims4ModManager\settings.json`: Mods-Ordner, zuletzt
-  genutzte Ordner, letztes Profil, Fensterposition) und Profile werden atomar geschrieben; die
-  vorherige Version bleibt als `.bak` erhalten und wird bei einer beschädigten Datei automatisch
-  verwendet.
+## Table of contents
 
-## Bauen & Ausführen
+- [Installation](#installation)
+- [Self-updating](#self-updating)
+- [Features](#features)
+  - [Detection & setup](#detection--setup)
+  - [Managing mods](#managing-mods)
+  - [Conflict detection & resolution](#conflict-detection--resolution)
+  - [Library (Tray)](#library-tray)
+  - [Game overview & health check](#game-overview--health-check)
+  - [Diagnostics](#diagnostics)
+  - [Saves](#saves)
+  - [History & backups](#history--backups)
+  - [Downloads & safety](#downloads--safety)
+  - [Storage & package tools](#storage--package-tools)
+  - [Mod updates (CurseForge)](#mod-updates-curseforge)
+  - [Search, UI & persistence](#search-ui--persistence)
+- [Project structure](#project-structure)
+- [Building from source](#building-from-source)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Installation
+
+1. Download the latest installer (`Sims4ModManagerSetup.exe`) from the
+   [Releases page](https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/releases/latest).
+2. Run it. No admin rights or separate .NET install required.
+3. On first launch, the setup assistant walks you through language, Mods-folder detection, and the
+   game's mod switches.
+
+Requires Windows. The app finds your Sims 4 `Mods` folder automatically (see
+[Detection & setup](#detection--setup)) regardless of game language or install location.
+
+## Self-updating
+
+The app checks this repo's [Releases](https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/releases)
+in the background on startup. When a newer version is available, a button appears in the title bar
+to download and install it in place — no manual download or reinstall needed. This is built on
+[Velopack](https://velopack.io); see [`docs/Release.md`](docs/Release.md) for how releases are
+published.
+
+## Features
+
+### Detection & setup
+
+- **Automatic Mods-folder detection** across every Documents location (including redirected or
+  OneDrive folders, in any language). The Sims 4 data folder is recognized independent of game
+  language ("The/Die/Les Sims 4" …, falling back to marker files like `Options.ini` or `saves`).
+  With multiple installations, the one with a `Mods` folder and the most recent activity wins.
+  Accidentally selecting the Sims 4 folder instead of `Mods` is corrected automatically. Mod files
+  sitting next to `Mods` instead of inside it (which the game ignores) are flagged.
+- **First-run setup assistant** (language, Mods folder incl. OneDrive warning, the game's mod
+  switches, an initial backup, overview) — reachable again later via the wand icon.
+
+### Managing mods
+
+- Every loose file or top-level folder in the Mods folder counts as one mod. Multi-file mods (e.g.
+  CC packs with several `.package` files) toggle as a single unit.
+- **Enable/disable** reversibly by appending/removing the `.disabled` suffix — files are never
+  moved, folder structure is preserved.
+- **Catalog**: every mod file as a tile with its in-package thumbnail (transparency-aware), names
+  from string tables, category (CAS hair/clothes/makeup …, objects, build items, gameplay,
+  scripts, sliders, poses, retextures), creator, age and gender from CAS parts. Filterable by
+  category/age/gender; results are cached under `cache\`.
+- **Sort**: organizes mods with a preview into collection folders like `CAS - Hair\<Creator>`,
+  `Objects`, or `Skript-Mods` (respecting the game's folder-depth limits; script-mod folders stay
+  put). Collection folders carry a `.s4mm-sammlung` marker; every mod inside stays individually
+  toggleable and keeps its identity. Your own folders can be marked "as a collection" too.
+  Fully undoable via History.
+- **Details & notes**: preview, category, creator and files; plus a note, "why installed?", tags,
+  and download/creator links (`notes.json`, stored outside the Mods folder).
+
+### Conflict detection & resolution
+
+- Reads the DBPF index of every active `.package` file (type/group/instance, deleted entries
+  ignored) and the Python modules of every `.ts4script` file, and reports resources or modules
+  provided by more than one mod.
+  - Byte-identical duplicates (even differently compressed) don't count as a conflict.
+  - Conflicts are grouped by the set of mods involved, with resource type and severity
+    (high: tuning/SimData/CAS parts/objects/scripts, medium: meshes/textures/strings,
+    low: thumbnails).
+  - Unreadable files are shown as a warning instead of being silently skipped.
+- **Resolution proposals** for each conflict group, working at the file level and keeping as much
+  as possible:
+  - *Duplicate install* → disable the older copy
+  - *Older version* (v1/v2, "Fixed", "Update", "(1)" …) → disable the older version
+  - *HQ vs. non-HQ variant* → disable non-HQ (alternative: HQ)
+  - *Already inside a merged set* (all its resources already exist in another package) → disable
+    the standalone file
+  - *Genuine overwrite* between different mods → remove only the contested resources from the
+    losing mod's package (rewritten in place, the rest of the mod stays intact); the newer file
+    wins by default, with the reverse offered as an alternative
+  - *Script overlap* → disable the older `.ts4script`
+  - "Safe resolutions" applies every pure duplicate-disable in one step.
+  - Sims 4 Studio's merge manifest (type `7FB6AD8A`) is never flagged as a conflict.
+
+### Library (Tray)
+
+A dedicated tab for the `Tray` folder — your local library of households, lots and rooms.
+
+- Shows name, creator, description, Sims, lot size, tags and date from `.trayitem` files
+  (protobuf), grouping every file that belongs to one entry (including Sim portraits).
+- Flags incomplete entries (missing `.trayitem`/`.householdbinary`/`.blueprint`/`.room`).
+- **CC detection**: finds the mod files an entry's CAS parts, objects and build items depend on —
+  including disabled ones, enabled with one click. The mod list shows the reverse: how many
+  library entries use a given mod.
+- **Export** an entry with its CC as a folder or ZIP (`Tray\` + `Mods\`).
+- **Install downloads** (ZIP/RAR/7z, including nested archives, folders or loose files): Tray files
+  go unchanged and flat into `Tray`, `.package`/`.ts4script` files into `Mods\<Download>\`. Files
+  that already exist (anywhere in `Mods`) or would collide by name are detected and never
+  overwritten.
+- **Cleanup**: Tray files sitting in `Mods`, mods sitting in `Tray`, Tray subfolders, renamed Tray
+  files, and un-extracted archives are flagged and can be moved on request.
+- **Remove** moves entries to `%AppData%\Sims4ModManager\backups` (restorable via "install
+  folder"); **backup** packs Tray + saves (optionally Mods) into a ZIP.
+- Thumbnails (`.hhi`/`.sgi`/`.bpi`/`.rmi`) aren't rendered — their format is proprietary and
+  undocumented.
+
+### Game overview & health check
+
+The "Overview" tab: game version, update detection, the game's own mod switches (`Options.ini`:
+mods/CC, script mods, CC list at startup), cache status, and every detected problem with one-click
+auto-fix ("fix all safe issues"). Checks include:
+
+- Sims 2/3 packages (DBPF 1.x/2.0), corrupted and empty files, interrupted downloads
+- `.ts4script` nested deeper than 1 folder, `.package` deeper than 5, paths over 259 characters
+- Readmes/images left in the Mods folder, empty folders, manually disabled mods (`.packageOFF` …),
+  missing or incomplete `Resource.cfg`, special characters
+- OneDrive sync and mods that only exist in the cloud
+- Stale game cache; after game updates, script/gameplay mods at risk ("safe mode" disables them
+  temporarily)
+
+Sorted-out files move to `Mods (sorted out)` next to the Mods folder — never deleted. Also: export
+or copy the mod list as text (for Discord/forums) or CSV. While the game is running, the app warns
+before any file-changing action.
+
+**Play**: the "Play" button (top right and on the overview) optionally applies a profile, clears
+the cache, optionally backs up saves, and launches `TS4_x64.exe` (install location found via
+registry/Steam). After the game exits, everything is rescanned and new error logs are flagged.
+
+### Diagnostics
+
+Reads `lastException*`, `lastUIException*`, `lastCrash*`, and MC Command Center / Better Exceptions
+reports, groups identical errors, and identifies the mod responsible (`.ts4script` path in the
+traceback, or the Python module name) with a button to disable it. Errors from older game versions
+are flagged and can be cleaned up.
+
+The **50/50 assistant** splits active mods in half repeatedly until the culprit behind a problem is
+found; progress survives an app restart (`bisect.json`), and every toggle goes through History.
+
+### Saves
+
+Shows every save with its households, Sims, lots, game version, and the CC it uses (including
+disabled CC). Disabling a mod a save depends on prompts a confirmation first. Saves can be backed
+up and restored individually (`backups\saves`).
+
+### History & backups
+
+Every file-changing action (enable/disable, profiles, installs, cleanup, removal, conflict
+resolutions) is journaled to `%AppData%\Sims4ModManager\backups\journal`; overwritten or removed
+files are copied first. The "History" tab (or `Ctrl+Z`) undoes any action — files changed again
+since then are never overwritten. The last 100 actions are kept.
+
+**Automatic backups** run before every game launch and/or daily/weekly at app start; only the
+newest automatic backups per slot are kept. The library is mirrored incrementally (`backups\tray`,
+older snapshots kept 30 days).
+
+### Downloads & safety
+
+New Sims downloads in your Downloads folder are detected and offered for install via a banner
+(can be turned off). Script mods are scanned for dangerous patterns (embedded `.exe`, process
+launches, obfuscated code) — including before install. Missing or disabled required libraries
+(S4CL, XML Injector, Lot 51 Core) are flagged.
+
+### Storage & package tools
+
+- **Storage**: size by category and creator, largest mods, byte-identical duplicates (extra copies
+  removable), and uncompressed data ("compress …" losslessly compresses it).
+- **Game index**: locates the install (registry, EA App, Steam, or manual) and reads the resource
+  indices of every game package (base game, delta patches, all packs; string tables excluded) —
+  cached in `cache\gameindex.bin`, rebuilt after updates or new packs. This enables:
+  - **Default replacements & tuning overrides**: mods that replace game resources (flagged and
+    filterable in the mod list). Game tuning lives in a binary blob, so tuning overrides are
+    detected via SimData keys or EA-typical ID/name patterns (a heuristic). Overrides older than
+    the last game update are flagged on the overview.
+  - **Meshless recolors**: CAS parts (GEOM references) and objects (the OBJD's model reference)
+    whose mesh exists in neither a mod nor the game — or only in a disabled mod.
+  - **Library**: required packs and missing CC per household (reference fields are learned from
+    the data). Lots and rooms are stored compressed by the game, so only "at least" figures are
+    available there.
+- **Package tools** (Mods tab → "Content"): resources by type, "optimize" (remove duplicate
+  entries, losslessly recompress), "unmerge" for merged packages. "Merge …" combines CC mods into
+  one package; the list of original files is stored in Sims 4 Studio's format (`0x7FB6AD8A`), so
+  either program can unmerge such packages.
+
+### Mod updates (CurseForge)
+
+Recognizes CurseForge mods by file fingerprint (MurmurHash2, same as CurseForge; cached in
+`cache\fingerprints.json`), shows newer releases, and installs them through History (undoable).
+Requires your own free API key (from console.curseforge.com), stored encrypted in settings via
+Windows DPAPI. *(This is separate from the app's own [self-update](#self-updating) mechanism.)*
+
+### Search, UI & persistence
+
+- **"What changed?"** (History tab): compares against the daily snapshot or the state before the
+  last game launch — new, removed, changed, (de)activated and moved files.
+- **Global search** (`Ctrl+K`): mods (name, creator, category, notes, tags, in-game names), library
+  and saves.
+- **Language**: German or English (EN/DE button in the title bar, restarts to apply). German is the
+  source language; translations live in
+  [`src/Sims4ModManager.Core/Localization/en.json`](src/Sims4ModManager.Core/Localization/en.json).
+- **UI**: Fluent design (WPF-UI) with a dark theme (toggle to light via the title-bar icon,
+  remembered), icons and tooltips throughout, search/filters in the mod list (e.g. "with
+  conflicts", "used in library"), a warning icon on conflicted mods, dimmed disabled mods.
+  Shortcuts: `F5` refresh, `Ctrl+F` search, `Enter` in the profile name saves it, double-click a
+  library entry to reveal it in Explorer.
+- **Persistence**: settings (`%AppData%\Sims4ModManager\settings.json`: Mods folder, recent
+  folders, last profile, window position) and profiles are written atomically; the previous
+  version is kept as `.bak` and used automatically if a file gets corrupted.
+
+## Project structure
+
+| Path | Contents |
+|---|---|
+| `src/Sims4ModManager.Core` | Core logic, no UI dependency: Mods/Tray folder scanning, DBPF parsing (`.package` files), enable/disable, conflict detection, profiles. |
+| `src/Sims4ModManager.App` | WPF UI (.NET 8, MVVM via CommunityToolkit.Mvvm, Fluent design via WPF-UI). |
+| `tests/Sims4ModManager.Core.Tests` | xUnit tests for the core logic. |
+| `docs/` | Design notes and the release process. |
+| `.github/workflows/` | CI (build + test) and the release pipeline. |
+
+## Building from source
 
 ```bash
 dotnet build
 dotnet run --project src/Sims4ModManager.App
 ```
 
-Bei Grafiktreiber-Problemen (leeres Fenster) lässt sich die App ohne GPU-Beschleunigung starten:
-Umgebungsvariable `S4MM_SOFTWARE_RENDERING=1` setzen. Unerwartete Fehler werden in
-`%AppData%\Sims4ModManager\error.log` protokolliert.
+If the window stays blank (broken/virtualized graphics drivers), run without GPU acceleration by
+setting the `S4MM_SOFTWARE_RENDERING=1` environment variable. Unexpected errors are logged to
+`%AppData%\Sims4ModManager\error.log`.
 
-## Tests
+### Tests
 
 ```bash
 dotnet test
 ```
+
+## Documentation
+
+- [CHANGELOG.md](CHANGELOG.md) — what changed in each version
+- [CONTRIBUTING.md](CONTRIBUTING.md) — dev setup, coding conventions, commit style
+- [docs/Release.md](docs/Release.md) — how a release is versioned, tagged and published
+- [SECURITY.md](SECURITY.md) — how to report a vulnerability
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, project
+structure, coding conventions, and how commits/PRs are expected to look. Please also read the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+## License
+
+[MIT](LICENSE)
