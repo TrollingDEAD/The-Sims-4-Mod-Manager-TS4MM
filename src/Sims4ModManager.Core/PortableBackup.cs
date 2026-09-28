@@ -23,6 +23,7 @@ public sealed class PortableSettings
     public int KeepAutoBackupsPerSlot { get; set; } = 5;
     public bool SortByCreator { get; set; } = true;
     public bool IncludePrereleaseUpdates { get; set; }
+    public string? AccentColor { get; set; }
 }
 
 /// <summary>
@@ -63,7 +64,8 @@ public static class PortableBackupService
                 AutoBackupIntervalDays = s.AutoBackupIntervalDays,
                 KeepAutoBackupsPerSlot = s.KeepAutoBackupsPerSlot,
                 SortByCreator = s.SortByCreator,
-                IncludePrereleaseUpdates = s.IncludePrereleaseUpdates
+                IncludePrereleaseUpdates = s.IncludePrereleaseUpdates,
+                AccentColor = s.AccentColor
             },
             Notes = new Dictionary<string, ModNote>(notes.AllNotes, StringComparer.OrdinalIgnoreCase),
             Profiles = profiles.LoadAllProfiles().ToList()
@@ -91,6 +93,7 @@ public static class PortableBackupService
             s.KeepAutoBackupsPerSlot = p.KeepAutoBackupsPerSlot;
             s.SortByCreator = p.SortByCreator;
             s.IncludePrereleaseUpdates = p.IncludePrereleaseUpdates;
+            s.AccentColor = p.AccentColor;
         });
 
         foreach (var (modId, note) in backup.Notes)

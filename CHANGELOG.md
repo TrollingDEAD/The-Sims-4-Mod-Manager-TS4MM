@@ -34,6 +34,9 @@ adheres to [Semantic Versioning](https://semver.org/).
   favorites and profiles to a single file, and import them on another PC - useful when moving to
   a new machine. Deliberately excludes anything machine-specific (Mods folder, window placement,
   the CurseForge API key).
+- Accent color customization (the paint brush icon in the title bar): eight color presets plus
+  "Windows default", on top of the existing dark/light toggle. Applies immediately and is included
+  in the portable settings backup above.
 - [docs/ROADMAP.md](docs/ROADMAP.md): a public list of planned improvements across mod management,
   performance, reliability, localization, accessibility and tooling.
 

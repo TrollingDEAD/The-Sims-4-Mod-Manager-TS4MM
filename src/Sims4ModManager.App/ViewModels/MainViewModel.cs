@@ -195,13 +195,39 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnIsDarkThemeChanged(bool value)
     {
-        ThemeService.Apply(value);
+        ThemeService.Apply(value, AccentColor);
         if (!_loadingTheme)
             _settingsStore.TryUpdate(s => s.Theme = value ? "Dark" : "Light");
     }
 
     [RelayCommand]
     private void ToggleTheme() => IsDarkTheme = !IsDarkTheme;
+
+    /// <summary>Accent color override, "#RRGGBB"; null means "follow the Windows accent color" (the default).</summary>
+    [ObservableProperty]
+    private string? accentColor;
+
+    [ObservableProperty]
+    private bool isAccentMenuOpen;
+
+    [RelayCommand]
+    private void ToggleAccentMenu() => IsAccentMenuOpen = !IsAccentMenuOpen;
+
+    public IReadOnlyList<string> AccentPresets => ThemeService.AccentPresets;
+
+    partial void OnAccentColorChanged(string? value)
+    {
+        ThemeService.Apply(IsDarkTheme, value);
+        if (!_loadingTheme)
+            _settingsStore.TryUpdate(s => s.AccentColor = value);
+    }
+
+    [RelayCommand]
+    private void SetAccentColor(string? hex)
+    {
+        AccentColor = string.IsNullOrEmpty(hex) ? null : hex;
+        IsAccentMenuOpen = false;
+    }
 
     [RelayCommand]
     private Task ShowShortcutsAsync() => _dialogs.ShowAsync(L.T("Tastenkürzel"), L.T(
@@ -452,6 +478,7 @@ public partial class MainViewModel : ObservableObject
         var settings = _settingsStore.Load();
 
         _loadingTheme = true;
+        AccentColor = settings.AccentColor;
         IsDarkTheme = !string.Equals(settings.Theme, "Light", StringComparison.OrdinalIgnoreCase);
         _loadingTheme = false;
 

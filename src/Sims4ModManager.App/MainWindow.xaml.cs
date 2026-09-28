@@ -45,7 +45,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }, System.Windows.Threading.DispatcherPriority.Background);
 
         // Window backdrop/title bar follow the theme chosen in the view model (saved in the settings).
-        Loaded += (_, _) => Services.ThemeService.Apply(_viewModel.IsDarkTheme);
+        Loaded += (_, _) => Services.ThemeService.Apply(_viewModel.IsDarkTheme, _viewModel.AccentColor);
 
         // First start: the setup assistant, once the main window is on screen; then a due scheduled backup.
         ContentRendered += async (_, _) =>

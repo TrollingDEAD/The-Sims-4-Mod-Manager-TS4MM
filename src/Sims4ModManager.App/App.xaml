@@ -16,6 +16,7 @@
             <services:InverseBoolConverter x:Key="InverseBool" />
             <services:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
             <services:FractionWidthConverter x:Key="FractionWidth" />
+            <services:HexToBrushConverter x:Key="HexToBrush" />
 
             <!-- Status colors: mid tones that stay readable on both dark and light backgrounds. -->
             <SolidColorBrush x:Key="DangerBrush" Color="#F0605A" />

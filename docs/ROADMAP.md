@@ -61,7 +61,9 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
 - ✅ "What's new" dialog shown once after an update, sourced from CHANGELOG.md.
 - ✅ Keyboard shortcuts reference (F1 / title-bar button).
 - ✅ Update channel toggle (stable / pre-release), live without a restart.
-- Accent color customization on top of the existing dark/light theme toggle.
+- ✅ Accent color customization (the paint brush icon in the title bar): eight presets plus "Windows
+  default", applied live via `Wpf.Ui`'s `ApplicationAccentColorManager` and included in the portable
+  settings backup.
 - A lightweight in-app notification/toast area for background events ("update check finished",
   "12 mods updated") instead of only the status bar text.
 

@@ -130,7 +130,7 @@
                            Command="{Binding ToggleLanguageCommand}" ToolTip="Sprache wechseln / Switch language">
                     <TextBlock Text="{Binding OtherLanguageLabel}" FontWeight="SemiBold" />
                 </ui:Button>
-                <ui:Button Appearance="Transparent" BorderThickness="0" Padding="8,4" Margin="0,0,4,0"
+                <ui:Button Appearance="Transparent" BorderThickness="0" Padding="8,4" Margin="0,0,2,0"
                            Command="{Binding ToggleThemeCommand}"
                            ToolTip="Zwischen dunklem und hellem Design wechseln">
                     <ui:SymbolIcon>
@@ -146,6 +146,42 @@
                         </ui:SymbolIcon.Style>
                     </ui:SymbolIcon>
                 </ui:Button>
+                <Grid Margin="0,0,4,0">
+                    <ui:Button x:Name="AccentMenuButton" Appearance="Transparent" BorderThickness="0" Padding="8,4"
+                               Command="{Binding ToggleAccentMenuCommand}" ToolTip="Akzentfarbe wählen">
+                        <ui:SymbolIcon Symbol="PaintBrush24" />
+                    </ui:Button>
+                    <Popup IsOpen="{Binding IsAccentMenuOpen}" PlacementTarget="{Binding ElementName=AccentMenuButton}"
+                           Placement="Bottom" StaysOpen="False" AllowsTransparency="True" Width="188">
+                        <Border Margin="0,4,0,0" Padding="8" CornerRadius="8" BorderThickness="1"
+                                Background="{DynamicResource ApplicationBackgroundBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                            <StackPanel>
+                                <TextBlock Text="Akzentfarbe" FontWeight="SemiBold" Margin="4,0,4,6" />
+                                <ui:Button Content="Windows-Standard" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch"
+                                           Margin="0,0,0,6" Command="{Binding SetAccentColorCommand}"
+                                           ToolTip="Folgt der Akzentfarbe von Windows" />
+                                <ItemsControl ItemsSource="{Binding AccentPresets}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Width="28" Height="28" Margin="2" Padding="0" Cursor="Hand"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Command="{Binding DataContext.SetAccentColorCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}" ToolTip="{Binding}">
+                                                <Ellipse Width="20" Height="20" Fill="{Binding Converter={StaticResource HexToBrush}}"
+                                                         Stroke="{DynamicResource CardStrokeColorDefaultBrush}" StrokeThickness="1" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                </Grid>
                 </StackPanel>
             </ui:TitleBar.TrailingContent>
         </ui:TitleBar>

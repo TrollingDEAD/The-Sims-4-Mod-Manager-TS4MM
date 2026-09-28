@@ -30,6 +30,7 @@ public class PortableBackupTests : IDisposable
             s.CurseForgeApiKeyProtected = "not-decryptable-on-another-machine";
             s.SortByCreator = false;
             s.IncludePrereleaseUpdates = true;
+            s.AccentColor = "#4C8DFF";
         });
         var notes = new ModNotesStore(Path.Combine(_root, "src", "notes.json"));
         notes.Set("mod.package", new ModNote { Note = "hi", IsFavorite = true });
@@ -40,6 +41,7 @@ public class PortableBackupTests : IDisposable
 
         Assert.False(backup.Settings.SortByCreator);
         Assert.True(backup.Settings.IncludePrereleaseUpdates);
+        Assert.Equal("#4C8DFF", backup.Settings.AccentColor);
         Assert.True(backup.Notes["mod.package"].IsFavorite);
         Assert.Single(backup.Profiles, p => p.Name == "Building");
     }

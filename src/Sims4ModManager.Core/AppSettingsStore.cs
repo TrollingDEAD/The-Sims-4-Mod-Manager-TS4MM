@@ -70,6 +70,9 @@ public sealed class AppSettings
 
     /// <summary>Include pre-release (beta) versions when checking GitHub Releases for app updates.</summary>
     public bool IncludePrereleaseUpdates { get; set; }
+
+    /// <summary>Accent color override, "#RRGGBB"; null means "use the Windows accent color".</summary>
+    public string? AccentColor { get; set; }
 }
 
 public sealed class WindowPlacement
