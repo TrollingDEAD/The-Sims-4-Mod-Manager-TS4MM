@@ -23,6 +23,10 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
   one document, for people who maintain a curated pack across machines.
 - Rename-safe move: relocate a mod between collection subfolders from inside the app instead of
   Explorer, updating notes/tags/profile references in one step.
+- Install directly from a CurseForge project URL/ID: paste a link, resolve it through the existing
+  `CurseForgeClient`, and install through the change journal - the counterpart to the fingerprint-based
+  update checker already in the "Updates" tab, for getting a mod in the first place rather than only
+  updating one already installed.
 
 ## Conflict resolution
 
@@ -31,6 +35,9 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
 - Severity-weighted "safe resolutions" preview before applying, showing exactly which files change.
 - Export a conflict report (already possible for the mod list) as a shareable document for asking
   for help in the community.
+- Persistent "ignore this conflict" dismissal for overlaps a user has reviewed and accepted (e.g. an
+  intentional override), so it stops resurfacing in the count on every rescan without disabling
+  either file.
 
 ## Performance & architecture
 
@@ -44,6 +51,11 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
   watcher events already used for download detection) instead of a full walk every time.
 - Virtualize the package-contents resource list for very large `.package` files instead of
   materializing the full resource table up front.
+- Apply the startup scan's background-thread pattern (`Task.Run` + `MainViewModel.ApplyScanResult`)
+  to the manual Refresh button too, now that it's been proven live (the UI stayed interactive
+  mid-scan): show a small inline "Scanning…" indicator instead of blocking, rather than the current
+  brief freeze. Deliberately deferred rather than shipped alongside the startup version, to keep that
+  change reviewable on its own.
 
 ## Safety & reliability
 
@@ -55,6 +67,9 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
   mistaken for a successful change.
 - Crash reporting opt-in: let users send `error.log` contents (with a review/redact step) instead
   of only being told the local log path.
+- Backup integrity check: after a scheduled automatic backup runs (see the toast it now reports
+  through), periodically verify a recent one actually restores cleanly instead of only confirming the
+  copy succeeded, so a silently corrupt backup is caught before it's needed.
 
 ## App-level features
 
@@ -67,6 +82,12 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
 - ✅ A lightweight in-app toast area (bottom-right) for background events that would otherwise only
   show up as status bar text easily overwritten before anyone reads it: a silent app-update check
   finding a new version, and a scheduled save/Tray backup running at startup.
+- A custom accent color beyond the eight presets (a small hex/RGB picker), for the paint brush menu
+  added above.
+- A toast history: since toasts auto-dismiss after a few seconds, a small bell icon with the last
+  handful of notifications so one missed while away from the keyboard isn't lost for good.
+- Minimize-to-tray and an optional "launch with Windows" setting, for people who leave the app
+  running alongside the game rather than closing it after "Spielen".
 
 ## Localization & accessibility
 
