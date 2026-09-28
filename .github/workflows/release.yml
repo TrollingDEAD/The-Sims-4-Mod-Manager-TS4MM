@@ -1,0 +1,62 @@
+# Builds, packs (Velopack) and publishes a GitHub Release whenever a "v*" tag is pushed.
+# See docs/Release.md for the full release process (version bump, changelog, tagging).
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  PACK_ID: Sims4ModManager
+  PACK_TITLE: Sims 4 Mod Manager
+  PACK_AUTHORS: TrollingDEAD
+  MAIN_EXE: Sims4ModManager.App.exe
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine version from tag
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Check tag matches Directory.Build.props
+        shell: bash
+        run: |
+          props_version=$(grep -m1 'VersionPrefix' Directory.Build.props | sed -E 's/.*<VersionPrefix>([^<]+)<\/VersionPrefix>.*/\1/')
+          if [ "$props_version" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match Directory.Build.props VersionPrefix ($props_version). Bump the version and commit before tagging."
+            exit 1
+          fi
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Run tests
+        run: dotnet test --configuration Release
+
+      - name: Publish app
+        run: dotnet publish src/Sims4ModManager.App/Sims4ModManager.App.csproj -c Release -o publish -r win-x64 --self-contained true
+
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk
+
+      - name: Download previous release (enables delta updates)
+        run: vpk download github --repoUrl https://github.com/${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Pack release
+        run: vpk pack --packId $env:PACK_ID --packVersion ${{ steps.version.outputs.version }} --packDir publish --mainExe $env:MAIN_EXE --packTitle "$env:PACK_TITLE" --packAuthors "$env:PACK_AUTHORS"
+
+      - name: Upload release to GitHub
+        run: vpk upload github --repoUrl https://github.com/${{ github.repository }} --publish --releaseName "$env:PACK_TITLE $env:GITHUB_REF_NAME" --tag $env:GITHUB_REF_NAME --token ${{ secrets.GITHUB_TOKEN }}

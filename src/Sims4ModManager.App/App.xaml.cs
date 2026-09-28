@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using Sims4ModManager.Core.Localization;
+using Velopack;
 
 namespace Sims4ModManager.App;
 
@@ -10,6 +11,20 @@ public partial class App : Application
     /// <summary>%AppData%\Sims4ModManager\error.log - unexpected errors end up here instead of vanishing silently.</summary>
     public static string ErrorLogPath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sims4ModManager", "error.log");
+
+    /// <summary>
+    /// Replaces the WPF-generated Main(): Velopack needs first say on startup (it handles install/update/
+    /// uninstall hooks and exits early for them) before any window is created. App.xaml is a Page, not an
+    /// ApplicationDefinition (see the .csproj), so the SDK no longer generates its own Main().
+    /// </summary>
+    [STAThread]
+    public static void Main(string[] args)
+    {
+        VelopackApp.Build().Run();
+        var app = new App();
+        app.InitializeComponent();
+        app.Run();
+    }
 
     protected override void OnStartup(StartupEventArgs e)
     {

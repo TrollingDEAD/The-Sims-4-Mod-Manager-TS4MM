@@ -7,6 +7,7 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <PackageReference Include="Velopack" Version="1.2.158" />
     <PackageReference Include="WPF-UI" Version="4.3.0" />
   </ItemGroup>
 
@@ -16,6 +17,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- Velopack needs to run before the WPF app starts, which needs a custom Main() (in App.xaml.cs) instead of the generated one. -->
+    <StartupObject>Sims4ModManager.App.App</StartupObject>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- App.xaml must not be an ApplicationDefinition, or the SDK generates its own Main() alongside ours. -->
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
 
 </Project>

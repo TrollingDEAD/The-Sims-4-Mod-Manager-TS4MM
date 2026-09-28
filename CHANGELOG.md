@@ -7,6 +7,18 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-28
+
+### Added
+
+- Self-updating: the app checks GitHub Releases in the background on startup and, when a newer
+  version is available, shows a title-bar button to download and install it in place (via
+  [Velopack](https://velopack.io)) - no manual download or reinstall needed. Only applies to
+  installations set up from a Velopack-built release (see [docs/Release.md](docs/Release.md)); a
+  `dotnet run` development build never checks.
+- A GitHub Actions workflow ([.github/workflows/release.yml](.github/workflows/release.yml)) that
+  builds, packs and publishes a release automatically whenever a `v*` tag is pushed.
+
 ## [1.0.1] - 2026-09-28
 
 ### Fixed
@@ -57,6 +69,7 @@ Initial public release.
 - **Global search**, **light/dark theme**, **German/English UI**, and a **first-run setup
   assistant**.
 
-[Unreleased]: https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/releases/tag/v1.0.0

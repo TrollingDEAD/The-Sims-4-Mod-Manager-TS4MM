@@ -252,6 +252,9 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Tab "Updates": CurseForge.</summary>
     public UpdatesViewModel Updates { get; }
 
+    /// <summary>App self-update (title bar): checks GitHub Releases, separate from the CurseForge mod updates above.</summary>
+    public AppUpdateViewModel AppUpdate { get; }
+
     // --- Conflict resolution ----------------------------------------------------------------------
 
     private IReadOnlyList<ResolutionProposal> _allProposals = Array.Empty<ResolutionProposal>();
@@ -356,6 +359,7 @@ public partial class MainViewModel : ObservableObject
         Search = new SearchViewModel(this);
         Game = new GameViewModel(this, dialogs);
         Updates = new UpdatesViewModel(this, dialogs);
+        AppUpdate = new AppUpdateViewModel(this);
         StartDownloadWatcher();
         Tray = new TrayViewModel(this, dialogs);
         Game.IndexReady += () => _ = Tray.ApplyGameChecksAsync();
@@ -384,6 +388,7 @@ public partial class MainViewModel : ObservableObject
             StatusMessage = resolution.Path is null ? L.T(resolution.Notice) : $"{L.T(resolution.Notice)} – {StatusMessage}";
 
         _ = Game.RefreshAsync(); // loads (or builds) the game index in the background
+        _ = AppUpdate.CheckAsync();
     }
 
     /// <summary>Marks the mods that replace game content (icon + filter in the mod list).</summary>

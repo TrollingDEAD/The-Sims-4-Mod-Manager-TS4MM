@@ -140,6 +140,10 @@ die App selbst oben in der Titelleiste an.
   gecacht in `cache\fingerprints.json`), zeigt neuere Releases und installiert sie über den Verlauf
   (rückgängig machbar). Braucht einen eigenen, kostenlosen API-Schlüssel (console.curseforge.com); er wird
   per Windows-DPAPI verschlüsselt in den Einstellungen gespeichert.
+- **App-Updates:** Die App prüft beim Start automatisch im Hintergrund, ob auf GitHub eine neuere
+  Version vorliegt, und zeigt dann einen Button in der Titelleiste zum Herunterladen und
+  Installieren (kein manueller Neu-Download/Reinstall nötig). Details zum Release-Prozess stehen in
+  [docs/Release.md](docs/Release.md).
 - **Was hat sich geändert?** (Tab „Verlauf“): Vergleich mit dem täglichen Stand bzw. dem Stand vor dem
   letzten Spielstart – neue, entfernte, geänderte, (de)aktivierte und verschobene Dateien.
 - **Globale Suche** (`Strg+K`): Mods (Name, Ersteller, Kategorie, Notizen, Tags, Namen im Spiel), Bibliothek

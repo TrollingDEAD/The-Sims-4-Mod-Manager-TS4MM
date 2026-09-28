@@ -34,6 +34,11 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="{Binding AppVersion}" Style="{StaticResource CaptionText}" Opacity="0.6"
                            VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Sims 4 Mod Manager – Version" />
+                <ui:Button Appearance="Primary" Padding="8,4" Margin="0,0,12,0" VerticalAlignment="Center"
+                           Icon="{ui:SymbolIcon ArrowDownload24}" Content="{Binding AppUpdate.ActionLabel}"
+                           Command="{Binding AppUpdate.RunActionCommand}"
+                           Visibility="{Binding AppUpdate.IsAvailable, Converter={StaticResource BoolToVisibility}}"
+                           ToolTip="Neue Version von GitHub laden und installieren" />
                 <!-- Global search: mods, creators, notes, in-game names, library, saves -->
                 <Grid Width="320" Margin="0,0,8,0" DataContext="{Binding Search}">
                     <ui:TextBox x:Name="GlobalSearchBox" PlaceholderText="Überall suchen … (Strg+K)" Icon="{ui:SymbolIcon Search24}"
