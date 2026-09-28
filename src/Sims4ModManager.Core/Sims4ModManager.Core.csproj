@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Localization\*.json" LogicalName="Sims4ModManager.Core.Localization.%(Filename)%(Extension)" />
+    <!-- For the in-app "what's new" summary shown after a self-update; kept in sync automatically since it's the repo's own file. -->
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="Sims4ModManager.Core.CHANGELOG.md" />
     <PackageReference Include="SharpCompress" Version="0.50.4" />
   </ItemGroup>
 

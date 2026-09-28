@@ -60,9 +60,7 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
 
 ## App-level features
 
-- "What's new" dialog: show the current version's changelog section once, the first time the app
-  runs after a self-update - the changelog already exists and is machine-parseable (the same
-  regex the release workflow uses to build GitHub release notes could drive this in-app).
+- ✅ "What's new" dialog shown once after an update, sourced from CHANGELOG.md.
 - Update channel setting: let users opt into pre-release builds instead of the hardcoded stable
   channel in `AppUpdateViewModel`.
 - Keyboard shortcuts reference (F1 or similar) listing everything currently only discoverable by

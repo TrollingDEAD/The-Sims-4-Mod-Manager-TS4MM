@@ -13,6 +13,7 @@ using Sims4ModManager.Core.Catalog;
 using Sims4ModManager.Core.Conflicts;
 using Sims4ModManager.Core.Localization;
 using Sims4ModManager.Core.Models;
+using Sims4ModManager.Core.Updates;
 
 namespace Sims4ModManager.App.ViewModels;
 
@@ -401,6 +402,32 @@ public partial class MainViewModel : ObservableObject
 
         _ = Game.RefreshAsync(); // loads (or builds) the game index in the background
         _ = AppUpdate.CheckAsync();
+        _ = ShowWhatsNewIfNeededAsync(settings);
+    }
+
+    /// <summary>
+    /// Shows the current version's changelog section once, the first time it runs after an update.
+    /// Silent on the very first install (nothing to compare against) and when the version has no
+    /// changelog section (e.g. a locally built dev version).
+    /// </summary>
+    private async Task ShowWhatsNewIfNeededAsync(AppSettings settings)
+    {
+        // Runs from the constructor before MainWindow.Show() - yield first so the dialog gets a
+        // proper owner and doesn't appear ahead of (and block) the main window becoming visible.
+        await Task.Yield();
+
+        string current = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
+        if (string.Equals(settings.LastSeenAppVersion, current, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _settingsStore.TryUpdate(s => s.LastSeenAppVersion = current);
+        if (settings.LastSeenAppVersion is null)
+            return; // first install: the setup assistant covers this instead
+
+        string? section = ChangelogReader.SectionFor(current);
+        if (section is null)
+            return;
+        await _dialogs.ShowAsync(L.F("Neu in Version {0}", current), ChangelogReader.ToPlainText(section));
     }
 
     /// <summary>Marks the mods that replace game content (icon + filter in the mod list).</summary>

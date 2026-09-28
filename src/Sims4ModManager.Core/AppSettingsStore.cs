@@ -64,6 +64,9 @@ public sealed class AppSettings
     public string? CurseForgeApiKeyProtected { get; set; }
 
     public DateTime? LastUpdateCheckUtc { get; set; }
+
+    /// <summary>App version the user last saw the "what's new" summary for; null before the first run.</summary>
+    public string? LastSeenAppVersion { get; set; }
 }
 
 public sealed class WindowPlacement

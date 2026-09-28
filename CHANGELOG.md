@@ -17,6 +17,8 @@ adheres to [Semantic Versioning](https://semver.org/).
   spinner and a crisp logo, sized to fit its text at any DPI) until the main window is ready.
 - Favorite mods: a star toggle in the mod list and the details panel, plus a "Favorites" entry in
   the mod filter dropdown. Stored alongside notes/tags, so it survives rescans and renames.
+- A "What's new" summary shown once, the first time the app runs after updating to a new version -
+  pulled directly from this changelog, so it never goes stale.
 - [docs/ROADMAP.md](docs/ROADMAP.md): a public list of planned improvements across mod management,
   performance, reliability, localization, accessibility and tooling.
 
