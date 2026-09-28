@@ -47,7 +47,7 @@ up and reversible.
 
 ## Installation
 
-1. Download the latest installer (`Sims4ModManagerSetup.exe`) from the
+1. Download the latest installer (`Sims4ModManager-win-Setup.exe`) from the
    [Releases page](https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM/releases/latest).
 2. Run it. No admin rights or separate .NET install required.
 3. On first launch, the setup assistant walks you through language, Mods-folder detection, and the

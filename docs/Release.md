@@ -29,12 +29,12 @@ this way onward.
 
 ## First install (not an update - a fresh install)
 
-Besides the Velopack update packages, a release also contains `Sims4ModManagerSetup.exe` - the
+Besides the Velopack update packages, a release also contains `Sims4ModManager-win-Setup.exe` - the
 installer for new users (linked from the release page on GitHub). Existing installations don't
 need it; they update via the in-app button instead.
 
 **Important:** users who installed the app before Velopack was introduced (the portable version,
-no Setup.exe) need to switch to `Sims4ModManagerSetup.exe` once, manually - after that,
+no Setup.exe) need to switch to `Sims4ModManager-win-Setup.exe` once, manually - after that,
 self-updating takes over.
 
 ## Publishing manually (without CI, e.g. for testing)
@@ -44,9 +44,13 @@ dotnet publish src/Sims4ModManager.App/Sims4ModManager.App.csproj -c Release -o 
 
 dotnet tool install -g vpk   # one-time
 vpk download github --repoUrl https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM --token <PAT>
-vpk pack --packId Sims4ModManager --packVersion 1.2.0 --packDir publish --mainExe Sims4ModManager.App.exe --packTitle "Sims 4 Mod Manager" --packAuthors "TrollingDEAD"
+vpk pack --packId Sims4ModManager --packVersion 1.2.0 --packDir publish --mainExe Sims4ModManager.App.exe --packTitle "Sims 4 Mod Manager" --packAuthors "TrollingDEAD" --runtime win-x64
 vpk upload github --repoUrl https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM --publish --releaseName "Sims 4 Mod Manager v1.2.0" --tag v1.2.0 --token <PAT>
 ```
+
+`--runtime win-x64` matters: without it, `vpk pack` silently assumes x86 in its package metadata
+even though the published binaries are x64 (confirmed by dry-running this exact pipeline before
+the first release).
 
 `<PAT>` is a GitHub Personal Access Token with `repo` scope; the CI workflow supplies this
 automatically via `secrets.GITHUB_TOKEN`.
@@ -55,5 +59,5 @@ automatically via `secrets.GITHUB_TOKEN`.
 
 - There's no app icon (`.ico`) yet; `vpk pack` runs fine without one (`--icon`), but the installer
   and taskbar show a placeholder icon until one is added.
-- Code signing isn't set up; Windows SmartScreen may warn on `Sims4ModManagerSetup.exe` until it
-  is.
+- Code signing isn't set up; Windows SmartScreen may warn on `Sims4ModManager-win-Setup.exe` until
+  it is.

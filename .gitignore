@@ -12,3 +12,6 @@ Releases/
 # Velopack local packaging output
 *-full.nupkg
 *-delta.nupkg
+
+# Local Claude Code session state
+.claude/

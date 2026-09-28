@@ -7,13 +7,6 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Changed
-
-- Overhauled repository documentation: a rewritten, badge-fronted `README.md` (now English, with a
-  table of contents and organized feature sections), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
-  `SECURITY.md`, issue/PR templates, `CODEOWNERS`, an `.editorconfig`, and a CI workflow that runs
-  build + test on every push and pull request. `docs/Release.md` is now in English to match.
-
 ## [1.1.0] - 2026-09-28
 
 ### Added
@@ -25,6 +18,13 @@ adheres to [Semantic Versioning](https://semver.org/).
   `dotnet run` development build never checks.
 - A GitHub Actions workflow ([.github/workflows/release.yml](.github/workflows/release.yml)) that
   builds, packs and publishes a release automatically whenever a `v*` tag is pushed.
+
+### Changed
+
+- Overhauled repository documentation: a rewritten, badge-fronted `README.md` (now English, with a
+  table of contents and organized feature sections), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
+  `SECURITY.md`, issue/PR templates, `CODEOWNERS`, an `.editorconfig`, and a CI workflow that runs
+  build + test on every push and pull request. `docs/Release.md` is now in English to match.
 
 ## [1.0.1] - 2026-09-28
 
