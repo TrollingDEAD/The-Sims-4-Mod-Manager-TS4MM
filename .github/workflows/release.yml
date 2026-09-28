@@ -55,8 +55,21 @@ jobs:
         run: vpk download github --repoUrl https://github.com/${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
+      - name: Extract changelog section for release notes
+        shell: pwsh
+        run: |
+          $text = Get-Content -Raw CHANGELOG.md
+          $version = "${{ steps.version.outputs.version }}"
+          $pattern = "(?ms)^## \[" + [regex]::Escape($version) + "\][^\r\n]*\r?\n(.*?)(?=\r?\n## \[|\z)"
+          $match = [regex]::Match($text, $pattern)
+          if (-not $match.Success) {
+            Write-Error "No CHANGELOG.md section found for version $version"
+            exit 1
+          }
+          Set-Content -Path release-notes.md -Value $match.Groups[1].Value.Trim()
+
       - name: Pack release
-        run: vpk pack --packId $env:PACK_ID --packVersion ${{ steps.version.outputs.version }} --packDir publish --mainExe $env:MAIN_EXE --packTitle "$env:PACK_TITLE" --packAuthors "$env:PACK_AUTHORS" --runtime win-x64
+        run: vpk pack --packId $env:PACK_ID --packVersion ${{ steps.version.outputs.version }} --packDir publish --mainExe $env:MAIN_EXE --packTitle "$env:PACK_TITLE" --packAuthors "$env:PACK_AUTHORS" --runtime win-x64 --releaseNotes release-notes.md
 
       - name: Upload release to GitHub
         run: vpk upload github --repoUrl https://github.com/${{ github.repository }} --publish --releaseName "$env:PACK_TITLE $env:GITHUB_REF_NAME" --tag $env:GITHUB_REF_NAME --token ${{ secrets.GITHUB_TOKEN }}

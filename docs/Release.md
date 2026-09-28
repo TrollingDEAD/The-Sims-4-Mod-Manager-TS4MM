@@ -21,10 +21,12 @@ this way onward.
    git push origin v1.2.0
    ```
 5. The tag push triggers [`.github/workflows/release.yml`](../.github/workflows/release.yml): it
-   builds the app (`dotnet publish`, self-contained, win-x64), packs it with the
+   builds the app (`dotnet publish`, self-contained, win-x64), extracts that version's section from
+   `CHANGELOG.md` to use as the release notes, packs everything with the
    [Velopack CLI](https://docs.velopack.io/reference/cli/content/vpk-windows) (`vpk pack`), and
    uploads the result as a GitHub Release (`vpk upload github --publish`). This takes a few
-   minutes; progress is visible under the repo's "Actions" tab.
+   minutes; progress is visible under the repo's "Actions" tab. (This is also why step 2 matters -
+   without a matching `## [MAJOR.MINOR.PATCH]` heading in `CHANGELOG.md`, this step fails.)
 6. Done - existing installations pick up the new release automatically on their next launch.
 
 ## First install (not an update - a fresh install)
