@@ -7,7 +7,8 @@ namespace Sims4ModManager.Core.Localization;
 /// <summary>
 /// UI texts. German is the source language and doubles as the key; other languages come from an
 /// embedded dictionary (Localization/en.json: German text → translation). Missing entries fall back
-/// to German, so an incomplete translation never shows empty text.
+/// to German, so an incomplete translation never shows empty text. English is the default language;
+/// German only applies when explicitly selected (settings, or an explicit <see cref="German"/> here).
 /// </summary>
 public static class L
 {
@@ -16,17 +17,17 @@ public static class L
 
     private static Dictionary<string, string> _texts = new();
 
-    public static string Language { get; private set; } = German;
+    public static string Language { get; private set; } = English;
 
     public static bool IsGerman => Language == German;
 
     /// <summary>Culture for dates and numbers in the current language.</summary>
-    public static CultureInfo Culture { get; private set; } = CultureInfo.GetCultureInfo("de-DE");
+    public static CultureInfo Culture { get; private set; } = CultureInfo.GetCultureInfo("en-US");
 
     /// <summary>Switches the language (call once at startup, before any UI is created).</summary>
     public static void Use(string? language)
     {
-        Language = language == English ? English : German;
+        Language = language == German ? German : English;
         Culture = CultureInfo.GetCultureInfo(Language == English ? "en-US" : "de-DE");
         _texts = Language == German ? new Dictionary<string, string>() : LoadMutable(Language);
     }

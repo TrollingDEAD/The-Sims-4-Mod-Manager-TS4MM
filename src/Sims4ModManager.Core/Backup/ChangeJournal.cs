@@ -89,7 +89,7 @@ public sealed class ChangeJournal
     {
         string dir = Path.Combine(RootDirectory, id);
         var set = JsonFile.TryRead<ChangeSet>(Path.Combine(dir, ManifestName))
-                  ?? throw new InvalidOperationException($"Sicherungspunkt {id} nicht gefunden.");
+                  ?? throw new InvalidOperationException(L.F("Sicherungspunkt {0} nicht gefunden.", id));
         if (set.IsUndone)
             return new UndoResult(0, new[] { L.T("Dieser Sicherungspunkt wurde bereits rückgängig gemacht.") });
 

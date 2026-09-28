@@ -205,7 +205,7 @@ public static class ConflictResolver
                 DbpfWriter.WriteWithout(file.AbsolutePath, proposal.Keys, temp);
                 int written = DbpfReader.TryReadIndex(temp)?.Count ?? -1;
                 if (written != expected)
-                    throw new InvalidDataException($"Überprüfung fehlgeschlagen: {written} statt {expected} Ressourcen geschrieben.");
+                    throw new InvalidDataException(L.F("Überprüfung fehlgeschlagen: {0} statt {1} Ressourcen geschrieben.", written, expected));
             });
             return new ResolutionResult(true, L.F("{0} Ressource(n) aus {1} entfernt.", proposal.Keys.Count, Label(proposal.Change)));
         }

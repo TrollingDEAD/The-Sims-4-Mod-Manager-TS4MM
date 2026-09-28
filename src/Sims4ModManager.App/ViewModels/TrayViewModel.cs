@@ -173,7 +173,7 @@ public partial class TrayViewModel : ObservableObject
     private async Task InstallDownloadsAsync()
     {
         var files = _dialogs.PickFiles(L.T("Downloads installieren (Archive, Tray- oder Mod-Dateien)"),
-            "Sims 4-Downloads|*.zip;*.rar;*.7z;*.package;*.ts4script;*.trayitem;*.householdbinary;*.blueprint;*.room;*.hhi;*.sgi;*.bpi;*.rmi|Alle Dateien|*.*");
+            L.T("Sims 4-Downloads|*.zip;*.rar;*.7z;*.package;*.ts4script;*.trayitem;*.householdbinary;*.blueprint;*.room;*.hhi;*.sgi;*.bpi;*.rmi|Alle Dateien|*.*"));
         if (files.Count > 0)
             await InstallAsync(files);
     }

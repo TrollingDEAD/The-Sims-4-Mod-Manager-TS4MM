@@ -1,3 +1,5 @@
+using Sims4ModManager.Core.Localization;
+
 namespace Sims4ModManager.Core.Dbpf;
 
 /// <summary>
@@ -12,7 +14,7 @@ public static class RefPack
     public static byte[] Decompress(ReadOnlySpan<byte> data)
     {
         if (data.Length < 5 || data[1] != 0xFB)
-            throw new InvalidDataException("Keine RefPack-Daten.");
+            throw new InvalidDataException(L.T("Keine RefPack-Daten."));
 
         byte flags = data[0];
         bool largeSizes = (flags & 0x80) != 0;
@@ -71,14 +73,14 @@ public static class RefPack
             {
                 int from = outPos - offset;
                 if (from < 0 || outPos + copy > output.Length)
-                    throw new InvalidDataException("Ungültige RefPack-Rückreferenz.");
+                    throw new InvalidDataException(L.T("Ungültige RefPack-Rückreferenz."));
                 for (int i = 0; i < copy; i++) // byte by byte: source and target may overlap
                     output[outPos++] = output[from + i];
             }
         }
 
         if (outPos != output.Length)
-            throw new InvalidDataException("RefPack-Daten unvollständig.");
+            throw new InvalidDataException(L.T("RefPack-Daten unvollständig."));
         return output;
     }
 
@@ -87,7 +89,7 @@ public static class RefPack
         if (count == 0)
             return;
         if (pos + count > data.Length || outPos + count > output.Length)
-            throw new InvalidDataException("RefPack-Daten abgeschnitten.");
+            throw new InvalidDataException(L.T("RefPack-Daten abgeschnitten."));
         data.Slice(pos, count).CopyTo(output.AsSpan(outPos));
         pos += count;
         outPos += count;

@@ -34,7 +34,8 @@ public sealed class SaveBackups
         foreach (string file in files)
             File.Copy(file, Path.Combine(folder, Path.GetFileName(file)));
         File.WriteAllText(Path.Combine(folder, "info.txt"),
-            $"{label}: {save.Name}\r\nGespeichert mit Spielversion {save.SavedWithVersion}\r\n" + (automatic ? AutomaticMarker + "\r\n" : ""));
+            $"{label}: {save.Name}\r\n" + L.F("Gespeichert mit Spielversion {0}", save.SavedWithVersion) + "\r\n" +
+            (automatic ? L.T(AutomaticMarker) + "\r\n" : ""));
         return Describe(folder)!;
     }
 

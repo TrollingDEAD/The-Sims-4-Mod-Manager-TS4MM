@@ -37,7 +37,7 @@ public sealed class AppSettings
     /// <summary>UI theme: "Dark" (default) or "Light".</summary>
     public string? Theme { get; set; }
 
-    /// <summary>UI language: "de" (default) or "en". Takes effect after a restart.</summary>
+    /// <summary>UI language: "en" (default) or "de". Takes effect after a restart.</summary>
     public string? Language { get; set; }
 
     /// <summary>Also mirror the Tray folder before playing (incremental, see TrayMirror).</summary>
