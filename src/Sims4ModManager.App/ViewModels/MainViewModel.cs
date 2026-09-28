@@ -102,10 +102,11 @@ public partial class MainViewModel : ObservableObject
     public static readonly string FilterUsedInLibrary = L.T("In Bibliothek verwendet");
     public static readonly string FilterWithNotes = L.T("Mit Notizen");
     public static readonly string FilterReplacesGame = L.T("Ersetzt Spielinhalte");
+    public static readonly string FilterFavorites = L.T("Favoriten");
 
     public IReadOnlyList<string> ModFilters { get; } = new[]
     {
-        FilterAll, FilterEnabled, FilterDisabled, FilterPartial, FilterConflicts, FilterUsedInLibrary, FilterWithNotes, FilterReplacesGame
+        FilterAll, FilterEnabled, FilterDisabled, FilterPartial, FilterConflicts, FilterUsedInLibrary, FilterWithNotes, FilterReplacesGame, FilterFavorites
     };
 
     /// <summary>Filtered view of <see cref="Mods"/> shown in the grid.</summary>
@@ -141,6 +142,7 @@ public partial class MainViewModel : ObservableObject
         else if (ModFilter == FilterUsedInLibrary) statusOk = mod.TrayUsage > 0;
         else if (ModFilter == FilterWithNotes) statusOk = mod.HasNote;
         else if (ModFilter == FilterReplacesGame) statusOk = mod.ReplacesGame;
+        else if (ModFilter == FilterFavorites) statusOk = mod.IsFavorite;
         if (!statusOk)
             return false;
 
@@ -151,6 +153,16 @@ public partial class MainViewModel : ObservableObject
                || mod.CategoryLabel.Contains(search, StringComparison.CurrentCultureIgnoreCase)
                || mod.Tags.Any(t => t.Contains(search, StringComparison.CurrentCultureIgnoreCase))
                || (mod.NoteTooltip?.Contains(search, StringComparison.CurrentCultureIgnoreCase) ?? false);
+    }
+
+    [RelayCommand]
+    private void ToggleFavorite(ModEntryViewModel? mod)
+    {
+        if (mod is null)
+            return;
+        mod.IsFavorite = _notes.ToggleFavorite(mod.Id);
+        if (ModFilter == FilterFavorites)
+            RefreshModsView();
     }
 
     // --- Selected mod (details panel) ---------------------------------------------------------------

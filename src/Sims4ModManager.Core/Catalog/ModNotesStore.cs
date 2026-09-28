@@ -13,8 +13,10 @@ public sealed class ModNote
     /// <summary>"Warum installiert?"</summary>
     public string? Reason { get; set; }
 
+    public bool IsFavorite { get; set; }
+
     public bool IsEmpty => string.IsNullOrWhiteSpace(Note) && Tags.Count == 0 && string.IsNullOrWhiteSpace(DownloadUrl)
-                           && string.IsNullOrWhiteSpace(CreatorUrl) && string.IsNullOrWhiteSpace(Reason);
+                           && string.IsNullOrWhiteSpace(CreatorUrl) && string.IsNullOrWhiteSpace(Reason) && !IsFavorite;
 }
 
 /// <summary>
@@ -54,5 +56,14 @@ public sealed class ModNotesStore
         else
             Notes[modId] = note;
         JsonFile.WriteAtomic(_path, new NotesFile { Notes = Notes });
+    }
+
+    /// <summary>Flips the favorite flag for a mod, preserving its other note fields, and returns the new state.</summary>
+    public bool ToggleFavorite(string modId)
+    {
+        var note = Get(modId) ?? new ModNote();
+        note.IsFavorite = !note.IsFavorite;
+        Set(modId, note);
+        return note.IsFavorite;
     }
 }

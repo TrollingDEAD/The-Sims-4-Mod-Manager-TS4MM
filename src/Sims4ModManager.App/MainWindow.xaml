@@ -508,6 +508,34 @@
                                                 </Style>
                                             </DataGridCheckBoxColumn.HeaderStyle>
                                         </DataGridCheckBoxColumn>
+                                        <DataGridTemplateColumn Header="★" Width="34" SortMemberPath="IsFavorite" IsReadOnly="True" CanUserSort="True">
+                                            <DataGridTemplateColumn.HeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
+                                                    <Setter Property="ToolTip" Value="Favorit" />
+                                                </Style>
+                                            </DataGridTemplateColumn.HeaderStyle>
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <ui:Button Appearance="Transparent" BorderThickness="0" Padding="4,2" HorizontalAlignment="Center"
+                                                               Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                               CommandParameter="{Binding}"
+                                                               ToolTip="Als Favorit markieren/entfernen">
+                                                        <ui:SymbolIcon Symbol="Star28" FontSize="16" Filled="{Binding IsFavorite}">
+                                                            <ui:SymbolIcon.Style>
+                                                                <Style TargetType="ui:SymbolIcon">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#FFC83D" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </ui:SymbolIcon.Style>
+                                                        </ui:SymbolIcon>
+                                                    </ui:Button>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
                                         <DataGridTemplateColumn Header="Name" Width="*" MinWidth="150" SortMemberPath="DisplayName" IsReadOnly="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
@@ -632,6 +660,23 @@
                                                       DataContext="{Binding ModDetails}">
                                             <StackPanel Margin="2,8,6,6">
                                                 <DockPanel>
+                                                    <ui:Button DockPanel.Dock="Right" VerticalAlignment="Top" Appearance="Transparent" BorderThickness="0" Padding="4,2"
+                                                               Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                               CommandParameter="{Binding Mod}"
+                                                               ToolTip="Als Favorit markieren/entfernen">
+                                                        <ui:SymbolIcon Symbol="Star28" FontSize="20" Filled="{Binding Mod.IsFavorite}">
+                                                            <ui:SymbolIcon.Style>
+                                                                <Style TargetType="ui:SymbolIcon">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Mod.IsFavorite}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#FFC83D" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </ui:SymbolIcon.Style>
+                                                        </ui:SymbolIcon>
+                                                    </ui:Button>
                                                     <Border DockPanel.Dock="Left" Width="96" Height="96" Margin="0,0,12,0" CornerRadius="8"
                                                             Background="{DynamicResource ControlFillColorSecondaryBrush}">
                                                         <Grid>

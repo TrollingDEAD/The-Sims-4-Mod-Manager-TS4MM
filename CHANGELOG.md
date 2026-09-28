@@ -15,6 +15,10 @@ adheres to [Semantic Versioning](https://semver.org/).
   can take a while on a large collection, during which the app previously showed nothing at all -
   easy to mistake for a failed launch. The splash appears immediately and stays visible (with a
   spinner and a crisp logo, sized to fit its text at any DPI) until the main window is ready.
+- Favorite mods: a star toggle in the mod list and the details panel, plus a "Favorites" entry in
+  the mod filter dropdown. Stored alongside notes/tags, so it survives rescans and renames.
+- [docs/ROADMAP.md](docs/ROADMAP.md): a public list of planned improvements across mod management,
+  performance, reliability, localization, accessibility and tooling.
 
 ## [1.1.0] - 2026-09-28
 

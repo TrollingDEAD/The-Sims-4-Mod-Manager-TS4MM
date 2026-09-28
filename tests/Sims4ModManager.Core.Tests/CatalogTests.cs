@@ -372,6 +372,35 @@ public class CatalogTests : IDisposable
     }
 
     [Fact]
+    public void ToggleFavoritePersistsAndSurvivesEmptyNoteText()
+    {
+        var store = new ModNotesStore(Path.Combine(_root, "notes.json"));
+
+        Assert.True(store.ToggleFavorite("mod.package"));
+        Assert.True(store.Get("mod.package")!.IsFavorite);
+
+        // Favoriting alone must not be discarded as an "empty" note, even with no note text/tags/links set.
+        var reloaded = new ModNotesStore(Path.Combine(_root, "notes.json"));
+        Assert.True(reloaded.Get("mod.package")!.IsFavorite);
+
+        Assert.False(reloaded.ToggleFavorite("mod.package"));
+        Assert.Null(new ModNotesStore(Path.Combine(_root, "notes.json")).Get("mod.package"));
+    }
+
+    [Fact]
+    public void TogglingFavoriteDoesNotDiscardExistingNoteText()
+    {
+        var store = new ModNotesStore(Path.Combine(_root, "notes.json"));
+        store.Set("mod.package", new ModNote { Note = "Lieblingshaar" });
+
+        store.ToggleFavorite("mod.package");
+
+        var note = new ModNotesStore(Path.Combine(_root, "notes.json")).Get("mod.package");
+        Assert.True(note!.IsFavorite);
+        Assert.Equal("Lieblingshaar", note.Note);
+    }
+
+    [Fact]
     public void AutomaticSaveBackupsArePrunedPerSlotButManualOnesKept()
     {
         string saves = Path.Combine(_root, "saves");

@@ -44,6 +44,10 @@ public partial class ModEntryViewModel : ObservableObject
     private string? noteTooltip;
 
     public bool HasNote => NoteTooltip is not null;
+
+    [ObservableProperty]
+    private bool isFavorite;
+
     /// <summary>What of the game this mod replaces (tooltip of the icon in the list); null if nothing.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ReplacesGame))]
@@ -74,7 +78,9 @@ public partial class ModEntryViewModel : ObservableObject
     public void SetNote(ModNote? note)
     {
         Tags = note?.Tags ?? (IReadOnlyList<string>)Array.Empty<string>();
-        if (note is null || note.IsEmpty)
+        IsFavorite = note?.IsFavorite ?? false;
+        if (note is null || (string.IsNullOrWhiteSpace(note.Note) && string.IsNullOrWhiteSpace(note.Reason)
+            && note.Tags.Count == 0 && string.IsNullOrWhiteSpace(note.DownloadUrl)))
         {
             NoteTooltip = null;
             return;
