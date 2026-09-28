@@ -7,6 +7,14 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- The mod scan at startup now runs on a background thread instead of blocking the main window's
+  construction, so the app becomes visible and responsive almost immediately - the splash screen
+  no longer sits frozen for the scan's duration on large mod collections; the main window's own
+  "Checking..." placeholder covers the (typically brief) time until it finishes. Every other
+  rescan (the Refresh button, undo, switching Mods folders, ...) is unchanged.
+
 ### Added
 
 - A real app icon (`src/Sims4ModManager.App/Resources/app.ico`, 10 sizes from 16px to 256px): the

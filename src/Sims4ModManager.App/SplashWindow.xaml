@@ -22,11 +22,12 @@
             <!--
                 A hand-rolled spinner instead of ui:ProgressRing, started explicitly in code-behind
                 (SpinnerStoryboard.Begin() in the constructor) rather than via a Loaded trigger, so it's
-                already running by the time the window is shown. Note: this does NOT keep animating
-                once MainWindow's constructor starts its blocking mod scan on the UI thread - measured
-                directly, WPF does not composite further frames for a window whose thread has stopped
-                pumping messages, regardless of animation technique. It looks correct up to that point
-                and resumes immediately once the scan finishes and the dispatcher is free again.
+                already running by the time the window is shown. This window itself is only up briefly:
+                the mod scan that used to run synchronously in MainWindow's constructor (and would have
+                frozen this animation - WPF does not composite further frames for a window whose UI
+                thread has stopped pumping messages) now runs on a background thread
+                (MainViewModel.RescanModsForStartupAsync), so MainWindow appears and this splash closes
+                almost immediately; MainWindow's own "Checking ..." placeholder covers the scan itself.
             -->
             <Path x:Name="Spinner" Width="24" Height="24" Margin="0,20,0,8" Stretch="Uniform"
                   Data="M 12,2 A 10,10 0 1 1 2,12"

@@ -34,13 +34,12 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
 
 ## Performance & architecture
 
-- Async mod scan: `ModScanner.Scan()` / `ConflictDetector.FindConflicts()` currently run
-  synchronously during `MainWindow`'s construction, which is why the splash screen's spinner
-  freezes for the scan's duration (see CHANGELOG "Unreleased" and the splash-screen implementation
-  notes). Moving the scan onto a background thread would let the splash animate continuously and
-  let the window open before scanning finishes. Non-trivial: touches 8 call sites across
-  `MainViewModel`, `HealthViewModel` and `HistoryViewModel`, with at least one ordering dependency
-  on synchronous completion.
+- ✅ Async mod scan at startup: the very first scan now runs on a background thread
+  (`MainViewModel.RescanModsForStartupAsync`), so the main window appears immediately instead of
+  waiting for `ModScanner.Scan()`/`ConflictDetector.FindConflicts()` to finish. Scoped
+  deliberately to just that one call site - every other rescan (Refresh button, undo, switching
+  Mods folders, ...) stays synchronous, where a brief block during an explicit user action is an
+  acceptable, well-understood tradeoff not worth threading through all 8 call sites for.
 - Incremental rescans: re-scan only the parts of the Mods folder that changed (via file-system
   watcher events already used for download detection) instead of a full walk every time.
 - Virtualize the package-contents resource list for very large `.package` files instead of

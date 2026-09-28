@@ -463,10 +463,13 @@ public partial class MainViewModel : ObservableObject
 
         ShowModsPath(resolution.Path);
         if (resolution.Path is not null)
-            RescanMods();
-
-        if (resolution.Notice is not null)
-            StatusMessage = resolution.Path is null ? L.T(resolution.Notice) : $"{L.T(resolution.Notice)} – {StatusMessage}";
+        {
+            _ = RescanModsForStartupAsync(resolution.Notice is null ? null : L.T(resolution.Notice));
+        }
+        else if (resolution.Notice is not null)
+        {
+            StatusMessage = L.T(resolution.Notice);
+        }
 
         _ = Game.RefreshAsync(); // loads (or builds) the game index in the background
         _ = AppUpdate.CheckAsync();
@@ -644,7 +647,55 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        _currentMods = ModScanner.Scan(ModsPath);
+        var scanned = ModScanner.Scan(ModsPath);
+        var report = ConflictDetector.FindConflicts(scanned);
+        ApplyScanResult(scanned, report, selectedId);
+    }
+
+    /// <summary>
+    /// Scans the Mods folder and detects conflicts on a background thread, then applies the result on
+    /// the UI thread - used only for the very first scan at startup, so the splash screen's spinner
+    /// keeps animating instead of freezing for the scan's duration (WPF stops compositing new frames
+    /// for a window whose UI thread has stopped pumping messages; see SplashWindow.xaml). Every other
+    /// caller uses the synchronous RescanMods()/RescanCore(), where blocking briefly during an explicit
+    /// user action (clicking "Rescan", undoing a change, ...) is an acceptable, well-understood tradeoff
+    /// that isn't worth the added complexity of threading through every call site.
+    /// </summary>
+    private async Task RescanModsForStartupAsync(string? notice)
+    {
+        string? path = ModsPath;
+        if (path is null || !Directory.Exists(path))
+        {
+            RescanCore(); // trivial/instant in this branch - no need for the background-thread path
+        }
+        else
+        {
+            var (scanned, report) = await Task.Run(() =>
+            {
+                var mods = ModScanner.Scan(path);
+                return (mods, ConflictDetector.FindConflicts(mods));
+            });
+            ApplyScanResult(scanned, report, selectedId: null);
+        }
+
+        if (notice is not null)
+            StatusMessage = $"{notice} – {StatusMessage}";
+
+        // Same follow-up as RescanMods(): re-analyze the library etc., since CC state may have changed.
+        // Note: Game.RefreshAsync() (started independently, right after this call) may finish first and
+        // fire IndexReady before this scan completes, running Tray's game-content check against a still-
+        // empty mod list; it self-corrects here once RefreshAsync() below re-runs it.
+        _ = Catalog.RefreshAsync();
+        _ = Tray.RefreshAsync();
+        _ = Health.RefreshAsync();
+        _ = Diagnose.RefreshAsync();
+        _ = Saves.RefreshAsync();
+        TakeDailySnapshot();
+    }
+
+    private void ApplyScanResult(IReadOnlyList<ModEntry> scanned, ConflictReport report, string? selectedId)
+    {
+        _currentMods = scanned;
 
         Mods.Clear();
         foreach (var mod in _currentMods)
@@ -659,13 +710,13 @@ public partial class MainViewModel : ObservableObject
             Mods.Add(vm);
         }
 
-        var report = ConflictDetector.FindConflicts(_currentMods);
         ShowConflicts(report);
         RefreshModsView(); // after ShowConflicts: the "Mit Konflikten" filter needs the conflict flags
         SelectedMod = selectedId is null ? null : Mods.FirstOrDefault(m => m.Id == selectedId);
 
         // Mod files placed next to the Mods folder instead of inside it are silently ignored by the game.
-        var misplaced = ModsFolderLocator.TryGetGameDataFolder(ModsPath)?.MisplacedModFiles ?? Array.Empty<string>();
+        var misplaced = ModsPath is null ? Array.Empty<string>()
+            : ModsFolderLocator.TryGetGameDataFolder(ModsPath)?.MisplacedModFiles ?? Array.Empty<string>();
         foreach (var file in misplaced)
             ScanWarnings.Add(L.F("{0} liegt außerhalb des Mods-Ordners ({1}) und wird vom Spiel nicht geladen.", Path.GetFileName(file), Path.GetDirectoryName(file)));
 
