@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Data;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sims4ModManager.App.Services;
@@ -227,6 +228,32 @@ public partial class MainViewModel : ObservableObject
     {
         AccentColor = string.IsNullOrEmpty(hex) ? null : hex;
         IsAccentMenuOpen = false;
+    }
+
+    // --- Toast notifications: brief, dismissible pop-ups for background events (a silent update check --------
+    // finding something, a scheduled backup running) that would otherwise only show up as status bar text
+    // easily overwritten by the next status update before anyone reads it. -------------------------------------
+
+    public ObservableCollection<ToastViewModel> Toasts { get; } = new();
+
+    public void ShowToast(string message, ToastKind kind = ToastKind.Info)
+    {
+        var toast = new ToastViewModel(message, kind);
+        Toasts.Add(toast);
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(6) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            Toasts.Remove(toast);
+        };
+        timer.Start();
+    }
+
+    [RelayCommand]
+    private void DismissToast(ToastViewModel? toast)
+    {
+        if (toast is not null)
+            Toasts.Remove(toast);
     }
 
     [RelayCommand]

@@ -37,6 +37,9 @@ adheres to [Semantic Versioning](https://semver.org/).
 - Accent color customization (the paint brush icon in the title bar): eight color presets plus
   "Windows default", on top of the existing dark/light toggle. Applies immediately and is included
   in the portable settings backup above.
+- A toast notification area (bottom-right) for background events that used to only appear as status
+  bar text: a silent app-update check finding a new version, and a scheduled save/Tray backup
+  running at startup. Dismissible, and disappears on its own after a few seconds.
 - [docs/ROADMAP.md](docs/ROADMAP.md): a public list of planned improvements across mod management,
   performance, reliability, localization, accessibility and tooling.
 

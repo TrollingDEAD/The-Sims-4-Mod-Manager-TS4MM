@@ -98,6 +98,7 @@ public partial class AppUpdateViewModel : ObservableObject
             return;
         LatestVersion = "v" + _pending.TargetFullRelease.Version;
         IsAvailable = true;
+        _main.ShowToast(L.F("Update {0} verfügbar.", LatestVersion), ToastKind.Info);
     }
 
     /// <summary>Downloads the pending update, then (once clicked again) applies it and restarts.</summary>

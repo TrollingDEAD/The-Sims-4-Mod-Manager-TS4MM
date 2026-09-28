@@ -2574,5 +2574,52 @@
                            ToolTip="{Binding StatusMessage}" />
             </DockPanel>
         </Border>
+
+        <!-- Toast notifications: brief pop-ups for background events (silent update checks, scheduled backups). -->
+        <ItemsControl Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                      Margin="0,0,16,52" Focusable="False" ItemsSource="{Binding Toasts}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Width="320" Margin="0,0,0,8" Padding="12,10" CornerRadius="8" BorderThickness="1"
+                            Background="{DynamicResource ApplicationBackgroundBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.3" />
+                        </Border.Effect>
+                        <DockPanel>
+                            <ui:Button DockPanel.Dock="Right" Appearance="Transparent" BorderThickness="0" Padding="4"
+                                       VerticalAlignment="Top" Margin="6,-2,-4,0"
+                                       Command="{Binding DataContext.DismissToastCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                       CommandParameter="{Binding}">
+                                <ui:SymbolIcon Symbol="Dismiss24" FontSize="12" />
+                            </ui:Button>
+                            <Border DockPanel.Dock="Left" Width="3" Margin="0,0,10,0" CornerRadius="2">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Kind}" Value="Success">
+                                                <Setter Property="Background" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Kind}" Value="Warning">
+                                                <Setter Property="Background" Value="{StaticResource WarningBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Kind}" Value="Error">
+                                                <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </ui:FluentWindow>

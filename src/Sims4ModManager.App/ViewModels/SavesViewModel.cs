@@ -204,11 +204,15 @@ public partial class SavesViewModel : ObservableObject
         try
         {
             string done = await RunAutomaticBackupAsync(settings.BackupTrayBeforePlay);
-            _main.StatusMessage = L.F("Automatische Sicherung: {0}.", done);
+            string message = L.F("Automatische Sicherung: {0}.", done);
+            _main.StatusMessage = message;
+            _main.ShowToast(message, ToastKind.Success);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _main.StatusMessage = L.F("Automatische Sicherung fehlgeschlagen: {0}", ex.Message);
+            string message = L.F("Automatische Sicherung fehlgeschlagen: {0}", ex.Message);
+            _main.StatusMessage = message;
+            _main.ShowToast(message, ToastKind.Error);
         }
     }
 

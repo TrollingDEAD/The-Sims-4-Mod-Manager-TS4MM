@@ -64,8 +64,9 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
 - ✅ Accent color customization (the paint brush icon in the title bar): eight presets plus "Windows
   default", applied live via `Wpf.Ui`'s `ApplicationAccentColorManager` and included in the portable
   settings backup.
-- A lightweight in-app notification/toast area for background events ("update check finished",
-  "12 mods updated") instead of only the status bar text.
+- ✅ A lightweight in-app toast area (bottom-right) for background events that would otherwise only
+  show up as status bar text easily overwritten before anyone reads it: a silent app-update check
+  finding a new version, and a scheduled save/Tray backup running at startup.
 
 ## Localization & accessibility
 
