@@ -1,0 +1,76 @@
+<ui:FluentWindow x:Class="Sims4ModManager.App.MergeWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Title="Packages zusammenführen" Width="920" Height="720" MinWidth="600" MinHeight="480"
+                 WindowStartupLocation="CenterOwner" ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica" WindowCornerPreference="Round" ResizeMode="CanResize">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ui:TitleBar Title="Packages zusammenführen" ShowMinimize="False" ShowMaximize="False">
+            <ui:TitleBar.Icon>
+                <ui:SymbolIcon Symbol="Merge24" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <Grid Grid.Row="1" Margin="18,6,18,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Style="{StaticResource CaptionText}" Margin="0,0,0,10"
+                       Text="Führt viele kleine CC-Dateien zu einem Package zusammen. Das verkürzt die Ladezeit beim Spielstart – schneller läuft das Spiel dadurch nicht. Die Liste der Originaldateien wird im Package gespeichert (wie bei Sims 4 Studio), so lässt es sich jederzeit wieder zerlegen. Skript-Mods werden nicht angeboten. Die Originale kommen in die Sicherung; alles lässt sich über den Verlauf rückgängig machen." />
+
+            <DockPanel Grid.Row="1" Margin="0,0,0,8">
+                <ComboBox DockPanel.Dock="Right" Width="200" Margin="8,0,0,0" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" />
+                <ui:TextBox PlaceholderText="Suchen (Name, Ersteller) …" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" Icon="{ui:SymbolIcon Search24}" />
+            </DockPanel>
+
+            <DataGrid Grid.Row="2" ItemsSource="{Binding Visible}" AutoGenerateColumns="False" CanUserAddRows="False"
+                      HeadersVisibility="Column" SelectionMode="Single" GridLinesVisibility="None"
+                      VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Header="" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="60" />
+                    <DataGridTextColumn Header="Mod" Binding="{Binding Name}" Width="*" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Kategorie" Binding="{Binding Category}" Width="150" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Ersteller" Binding="{Binding Creator}" Width="120" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Dateien" Binding="{Binding Details}" Width="150" IsReadOnly="True" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,0">
+                <ui:Button Content="Alle angezeigten auswählen" Icon="{ui:SymbolIcon CheckboxChecked24}" Command="{Binding SelectVisibleCommand}" Margin="0,0,8,0" />
+                <ui:Button Content="Auswahl aufheben" Icon="{ui:SymbolIcon CheckboxUnchecked24}" Command="{Binding ClearSelectionCommand}" />
+            </StackPanel>
+
+            <DockPanel Grid.Row="4" Margin="0,12,0,0">
+                <TextBlock Text="Name des neuen Packages:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <ui:TextBox Text="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" />
+            </DockPanel>
+
+            <StackPanel Grid.Row="5" Margin="0,10,0,0">
+                <TextBlock Text="{Binding Summary}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Warning}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,4,0,0" />
+            </StackPanel>
+
+            <DockPanel Grid.Row="6" Margin="0,12,0,0">
+                <ui:ProgressRing DockPanel.Dock="Left" IsIndeterminate="True" Height="24" Width="24"
+                                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <ui:Button Content="Abbrechen" Command="{Binding CancelCommand}" Margin="0,0,8,0" />
+                    <ui:Button Content="Zusammenführen" Icon="{ui:SymbolIcon Merge24}" Appearance="Primary"
+                               Command="{Binding MergeCommand}" IsEnabled="{Binding CanMerge}" />
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

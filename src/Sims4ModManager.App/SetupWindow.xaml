@@ -1,0 +1,165 @@
+<ui:FluentWindow x:Class="Sims4ModManager.App.SetupWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Title="Einrichtung" Width="720" Height="760" MinWidth="560" MinHeight="520"
+                 WindowStartupLocation="CenterOwner" ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica" WindowCornerPreference="Round">
+    <Window.Resources>
+        <Style x:Key="StepCard" TargetType="Border">
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+        </Style>
+        <Style x:Key="StepNumber" TargetType="Border">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="CornerRadius" Value="13" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ui:TitleBar Title="Einrichtung" ShowMinimize="False" ShowMaximize="False">
+            <ui:TitleBar.Icon>
+                <ui:SymbolIcon Symbol="Wand24" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="18,4,18,8">
+            <StackPanel>
+                <TextBlock Text="Willkommen beim Sims 4 Mod Manager" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,4" />
+                <TextBlock Style="{StaticResource CaptionText}" Margin="0,0,0,14"
+                           Text="In fünf kurzen Schritten ist alles startklar. Jeder Schritt lässt sich später im jeweiligen Tab ändern; dieser Assistent ist über das Zauberstab-Symbol oben rechts jederzeit wieder erreichbar." />
+
+                <!-- 1 Language -->
+                <Border Style="{StaticResource StepCard}">
+                    <DockPanel>
+                        <Border Style="{StaticResource StepNumber}"><TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontWeight="SemiBold" /></Border>
+                        <StackPanel>
+                            <TextBlock Text="Sprache / Language" Style="{StaticResource SectionHeader}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <RadioButton Content="Deutsch" GroupName="lang" Margin="0,0,18,0" IsChecked="{Binding IsEnglish, Converter={StaticResource InverseBool}}" />
+                                <RadioButton Content="English" GroupName="lang" IsChecked="{Binding IsEnglish}" />
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource CaptionText}" Margin="0,4,0,0" Text="Die App startet nach „Fertig“ in der neuen Sprache neu. / The app restarts in the new language after „Fertig“."
+                                       Visibility="{Binding LanguageChanged, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- 2 Folder -->
+                <Border Style="{StaticResource StepCard}">
+                    <DockPanel>
+                        <Border Style="{StaticResource StepNumber}"><TextBlock Text="2" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontWeight="SemiBold" /></Border>
+                        <StackPanel>
+                            <TextBlock Text="Mods-Ordner" Style="{StaticResource SectionHeader}" />
+                            <TextBlock Text="{Binding Main.ModsPath}" Margin="0,4,0,0" TextWrapping="Wrap" FontFamily="Cascadia Mono, Consolas" FontSize="12" />
+                            <DockPanel Margin="0,4,0,0">
+                                <ui:SymbolIcon DockPanel.Dock="Left" Margin="0,0,6,0" VerticalAlignment="Top">
+                                    <ui:SymbolIcon.Style>
+                                        <Style TargetType="ui:SymbolIcon">
+                                            <Setter Property="Symbol" Value="Warning24" />
+                                            <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding FolderOk}" Value="True">
+                                                    <Setter Property="Symbol" Value="CheckmarkCircle24" />
+                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ui:SymbolIcon.Style>
+                                </ui:SymbolIcon>
+                                <TextBlock Text="{Binding FolderHint}" Style="{StaticResource CaptionText}" />
+                            </DockPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <ui:Button Content="Automatisch erkennen" Icon="{ui:SymbolIcon Wand24}" Command="{Binding DetectFolderCommand}" Margin="0,0,6,0" />
+                                <ui:Button Content="Ordner wählen …" Icon="{ui:SymbolIcon FolderOpen24}" Command="{Binding ChooseFolderCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- 3 Game switches -->
+                <Border Style="{StaticResource StepCard}">
+                    <DockPanel>
+                        <Border Style="{StaticResource StepNumber}"><TextBlock Text="3" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontWeight="SemiBold" /></Border>
+                        <StackPanel>
+                            <TextBlock Text="Mods im Spiel einschalten" Style="{StaticResource SectionHeader}" />
+                            <TextBlock Style="{StaticResource CaptionText}" Margin="0,4,0,6"
+                                       Text="Das Spiel lädt Mods nur, wenn sie in den Spieloptionen erlaubt sind. Nach jedem großen Update schaltet EA das wieder aus." />
+                            <StackPanel Visibility="{Binding Health.HasOptions, Converter={StaticResource BoolToVisibility}}">
+                                <ui:ToggleSwitch Content="Eigene Inhalte und Mods aktivieren" IsChecked="{Binding Health.ModsEnabledInGame}" Margin="0,0,0,6" />
+                                <ui:ToggleSwitch Content="Skript-Mods erlauben" IsChecked="{Binding Health.ScriptModsEnabledInGame}" />
+                            </StackPanel>
+                            <TextBlock Text="Die Spieleinstellungen (Options.ini) gibt es noch nicht – bitte das Spiel einmal starten und wieder beenden.">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource CaptionText}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Health.HasOptions}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- 4 Backup -->
+                <Border Style="{StaticResource StepCard}">
+                    <DockPanel>
+                        <Border Style="{StaticResource StepNumber}"><TextBlock Text="4" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontWeight="SemiBold" /></Border>
+                        <StackPanel>
+                            <TextBlock Text="Sicherung" Style="{StaticResource SectionHeader}" />
+                            <TextBlock Style="{StaticResource CaptionText}" Margin="0,4,0,6"
+                                       Text="Spielstände gehen durch fehlerhafte Mods oder Updates am ehesten verloren. Automatische Sicherungen behalten pro Slot nur die neuesten Stände." />
+                            <CheckBox Content="Spielstände vor jedem Spielstart sichern" IsChecked="{Binding Saves.BackupSavesBeforePlay}" Margin="0,0,0,4" />
+                            <CheckBox Content="Bibliothek (Tray) vor jedem Spielstart spiegeln" IsChecked="{Binding Saves.BackupTrayBeforePlay}" Margin="0,0,0,6"
+                                      ToolTip="Kopiert nur neue oder geänderte Dateien. Überschriebene und gelöschte Einträge bleiben 30 Tage in „Ältere Stände“." />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock Text="Zusätzlich automatisch:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <ComboBox Width="150" ItemsSource="{Binding Saves.IntervalOptions}" SelectedItem="{Binding Saves.Interval}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <ui:Button Content="Jetzt erste Sicherung anlegen" Icon="{ui:SymbolIcon Save24}" Command="{Binding Saves.BackupNowCommand}" Margin="0,0,10,0" />
+                                <TextBlock Text="{Binding Saves.AutoBackupStatus}" Style="{StaticResource CaptionText}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- 5 Overview -->
+                <Border Style="{StaticResource StepCard}">
+                    <DockPanel>
+                        <Border Style="{StaticResource StepNumber}"><TextBlock Text="5" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontWeight="SemiBold" /></Border>
+                        <StackPanel>
+                            <TextBlock Text="Überblick" Style="{StaticResource SectionHeader}" />
+                            <TextBlock Text="{Binding Health.Summary}" Margin="0,4,0,8" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal">
+                                <ui:Button Content="Alle sicheren beheben" Icon="{ui:SymbolIcon Wrench24}" Command="{Binding Health.FixAllSafeCommand}" Margin="0,0,6,0"
+                                           ToolTip="Behebt alle Probleme, bei denen nichts verloren gehen kann (alles lässt sich über den Verlauf rückgängig machen)." />
+                                <ui:Button Content="Details in der Übersicht" Icon="{ui:SymbolIcon HeartPulse24}" Command="{Binding ShowOverviewCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Padding="18,12" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+            <ui:Button Content="Fertig" Icon="{ui:SymbolIcon Checkmark24}" Appearance="Primary" HorizontalAlignment="Right" MinWidth="120"
+                       Command="{Binding FinishCommand}" />
+        </Border>
+    </Grid>
+</ui:FluentWindow>

@@ -1,0 +1,79 @@
+<Application x:Class="Sims4ModManager.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:services="clr-namespace:Sims4ModManager.App.Services"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Fluent styles for all standard controls; the theme is switched at runtime (dark by default). -->
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+            <services:JoinConverter x:Key="JoinConverter" />
+            <services:InverseBoolConverter x:Key="InverseBool" />
+            <services:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+            <services:FractionWidthConverter x:Key="FractionWidth" />
+
+            <!-- Status colors: mid tones that stay readable on both dark and light backgrounds. -->
+            <SolidColorBrush x:Key="DangerBrush" Color="#F0605A" />
+            <SolidColorBrush x:Key="WarningBrush" Color="#E3A33B" />
+            <SolidColorBrush x:Key="SuccessBrush" Color="#4CB86A" />
+
+            <!-- Secondary text (captions, hints). -->
+            <Style x:Key="CaptionText" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+
+            <Style x:Key="SectionHeader" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+
+            <!-- Collapses a TextBlock whose text is empty. -->
+            <Style x:Key="HideWhenEmpty" TargetType="TextBlock" BasedOn="{StaticResource CaptionText}">
+                <Style.Triggers>
+                    <Trigger Property="Text" Value="">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Severity coloring (Severity enum of conflict groups/items). -->
+            <Style x:Key="SeverityText" TargetType="TextBlock">
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Severity}" Value="Medium">
+                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Severity}" Value="High">
+                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- DataGrid text cell that ends in "…" instead of being cut off; the full text is in the tooltip. -->
+            <Style x:Key="TrimmedCell" TargetType="TextBlock">
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+            </Style>
+
+            <!-- Placeholder shown over an empty list ("Keine Konflikte" etc.). -->
+            <Style x:Key="EmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource CaptionText}">
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="TextAlignment" Value="Center" />
+                <Setter Property="Margin" Value="24" />
+                <Setter Property="IsHitTestVisible" Value="False" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

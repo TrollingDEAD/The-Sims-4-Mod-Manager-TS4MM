@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Sims4ModManager.App/Sims4ModManager.App.csproj" />
+    <Project Path="src/Sims4ModManager.Core/Sims4ModManager.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Sims4ModManager.Core.Tests/Sims4ModManager.Core.Tests.csproj" />
+  </Folder>
+</Solution>
