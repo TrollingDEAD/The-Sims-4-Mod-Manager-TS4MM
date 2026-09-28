@@ -3,6 +3,7 @@
 | Document | What's in it |
 |---|---|
 | [Release.md](Release.md) | How to cut and publish a new version (maintainer task). |
+| [ROADMAP.md](ROADMAP.md) | Planned improvements and open ideas, grouped by area. |
 | [Funktionsplan.md](Funktionsplan.md) | Original feature research and design notes (German) - the "why" behind what's built; not kept up to date after the fact. |
 
 For everything else, start at the repository root:

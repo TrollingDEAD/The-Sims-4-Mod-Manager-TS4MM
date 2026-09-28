@@ -273,6 +273,7 @@ dotnet test
 ## Documentation
 
 - [CHANGELOG.md](CHANGELOG.md) — what changed in each version
+- [docs/ROADMAP.md](docs/ROADMAP.md) — planned improvements and open ideas
 - [CONTRIBUTING.md](CONTRIBUTING.md) — dev setup, coding conventions, commit style
 - [docs/Release.md](docs/Release.md) — how a release is versioned, tagged and published
 - [SECURITY.md](SECURITY.md) — how to report a vulnerability
