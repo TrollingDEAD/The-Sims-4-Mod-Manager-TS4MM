@@ -20,6 +20,8 @@ adheres to [Semantic Versioning](https://semver.org/).
 - A "What's new" summary shown once, the first time the app runs after updating to a new version -
   pulled directly from this changelog, so it never goes stale.
 - A keyboard shortcuts reference (F1, or the "?" button in the title bar).
+- An update channel toggle (the rocket icon next to the version number): opt into pre-release
+  (beta) app builds instead of only stable releases. Takes effect immediately, no restart needed.
 - [docs/ROADMAP.md](docs/ROADMAP.md): a public list of planned improvements across mod management,
   performance, reliability, localization, accessibility and tooling.
 

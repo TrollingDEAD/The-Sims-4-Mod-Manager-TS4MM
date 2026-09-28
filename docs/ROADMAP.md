@@ -62,8 +62,7 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
 
 - ✅ "What's new" dialog shown once after an update, sourced from CHANGELOG.md.
 - ✅ Keyboard shortcuts reference (F1 / title-bar button).
-- Update channel setting: let users opt into pre-release builds instead of the hardcoded stable
-  channel in `AppUpdateViewModel`.
+- ✅ Update channel toggle (stable / pre-release), live without a restart.
 - Accent color customization on top of the existing dark/light theme toggle.
 - A lightweight in-app notification/toast area for background events ("update check finished",
   "12 mods updated") instead of only the status bar text.

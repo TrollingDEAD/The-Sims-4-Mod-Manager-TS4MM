@@ -35,7 +35,22 @@
             <ui:TitleBar.TrailingContent>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="{Binding AppVersion}" Style="{StaticResource CaptionText}" Opacity="0.6"
-                           VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Sims 4 Mod Manager – Version" />
+                           VerticalAlignment="Center" Margin="0,0,4,0" ToolTip="Sims 4 Mod Manager – Version" />
+                <ui:Button Appearance="Transparent" BorderThickness="0" Padding="6,4" Margin="0,0,8,0" VerticalAlignment="Center"
+                           Command="{Binding AppUpdate.ToggleChannelCommand}" ToolTip="{Binding AppUpdate.ChannelToggleTooltip}">
+                    <ui:SymbolIcon Symbol="Rocket24" FontSize="15" Filled="{Binding AppUpdate.IncludePrereleases}">
+                        <ui:SymbolIcon.Style>
+                            <Style TargetType="ui:SymbolIcon">
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AppUpdate.IncludePrereleases}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ui:SymbolIcon.Style>
+                    </ui:SymbolIcon>
+                </ui:Button>
                 <ui:Button Appearance="Primary" Padding="8,4" Margin="0,0,12,0" VerticalAlignment="Center"
                            Icon="{ui:SymbolIcon ArrowDownload24}" Content="{Binding AppUpdate.ActionLabel}"
                            Command="{Binding AppUpdate.RunActionCommand}"

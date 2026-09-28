@@ -17,10 +17,41 @@ public partial class AppUpdateViewModel : ObservableObject
     private const string RepoUrl = "https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM";
 
     private readonly MainViewModel _main;
-    private readonly UpdateManager _manager = new(new GithubSource(RepoUrl, null, prerelease: false));
+    private UpdateManager _manager;
     private UpdateInfo? _pending;
 
-    public AppUpdateViewModel(MainViewModel main) => _main = main;
+    public AppUpdateViewModel(MainViewModel main)
+    {
+        _main = main;
+        includePrereleases = main.Settings.Load().IncludePrereleaseUpdates;
+        _manager = new UpdateManager(new GithubSource(RepoUrl, null, prerelease: includePrereleases));
+    }
+
+    /// <summary>Include pre-release (beta) builds when checking for an app update; persisted, no restart needed.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NextChannelLabel), nameof(ChannelToggleTooltip))]
+    private bool includePrereleases;
+
+    /// <summary>Label of the channel toggle button: the channel clicking it switches <em>to</em>.</summary>
+    public string NextChannelLabel => IncludePrereleases ? L.T("Stable") : L.T("Beta");
+
+    public string ChannelToggleTooltip => IncludePrereleases
+        ? L.T("Beta-Updates (Vorabversionen) sind aktiv. Klicken, um zu stabilen Updates zu wechseln.")
+        : L.T("Stabile Updates sind aktiv. Klicken, um auch Beta-Updates (Vorabversionen) zu erhalten.");
+
+    partial void OnIncludePrereleasesChanged(bool value)
+    {
+        _main.Settings.TryUpdate(s => s.IncludePrereleaseUpdates = value);
+        _manager = new UpdateManager(new GithubSource(RepoUrl, null, prerelease: value));
+        _pending = null;
+        IsAvailable = false;
+        IsReadyToInstall = false;
+        LatestVersion = null;
+        _ = CheckAsync();
+    }
+
+    [RelayCommand]
+    private void ToggleChannel() => IncludePrereleases = !IncludePrereleases;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActionLabel))]

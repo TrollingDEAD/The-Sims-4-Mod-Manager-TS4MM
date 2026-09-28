@@ -67,6 +67,9 @@ public sealed class AppSettings
 
     /// <summary>App version the user last saw the "what's new" summary for; null before the first run.</summary>
     public string? LastSeenAppVersion { get; set; }
+
+    /// <summary>Include pre-release (beta) versions when checking GitHub Releases for app updates.</summary>
+    public bool IncludePrereleaseUpdates { get; set; }
 }
 
 public sealed class WindowPlacement
