@@ -3,6 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  Title="Einrichtung" Width="720" Height="760" MinWidth="560" MinHeight="520"
+                 Icon="Resources/app.ico"
                  WindowStartupLocation="CenterOwner" ExtendsContentIntoTitleBar="True"
                  WindowBackdropType="Mica" WindowCornerPreference="Round">
     <Window.Resources>

@@ -46,7 +46,7 @@ dotnet publish src/Sims4ModManager.App/Sims4ModManager.App.csproj -c Release -o 
 
 dotnet tool install -g vpk   # one-time
 vpk download github --repoUrl https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM --token <PAT>
-vpk pack --packId Sims4ModManager --packVersion 1.2.0 --packDir publish --mainExe Sims4ModManager.App.exe --packTitle "Sims 4 Mod Manager" --packAuthors "TrollingDEAD" --runtime win-x64
+vpk pack --packId Sims4ModManager --packVersion 1.2.0 --packDir publish --mainExe Sims4ModManager.App.exe --packTitle "Sims 4 Mod Manager" --packAuthors "TrollingDEAD" --runtime win-x64 --icon src/Sims4ModManager.App/Resources/app.ico
 vpk upload github --repoUrl https://github.com/TrollingDEAD/The-Sims-4-Mod-Manager-TS4MM --publish --releaseName "Sims 4 Mod Manager v1.2.0" --tag v1.2.0 --token <PAT>
 ```
 
@@ -59,7 +59,5 @@ automatically via `secrets.GITHUB_TOKEN`.
 
 ## Known gaps
 
-- There's no app icon (`.ico`) yet; `vpk pack` runs fine without one (`--icon`), but the installer
-  and taskbar show a placeholder icon until one is added.
 - Code signing isn't set up; Windows SmartScreen may warn on `Sims4ModManager-win-Setup.exe` until
   it is.

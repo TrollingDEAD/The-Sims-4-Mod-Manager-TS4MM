@@ -7,6 +7,11 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- A real app icon (`src/Sims4ModManager.App/Resources/app.ico`, 10 sizes from 16px to 256px): the
+  exe, all windows, and the release installer now show it instead of a generic placeholder.
+
 ## [1.1.0] - 2026-09-28
 
 ### Added

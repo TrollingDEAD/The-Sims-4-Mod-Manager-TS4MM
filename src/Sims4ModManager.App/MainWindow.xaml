@@ -6,6 +6,7 @@
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  mc:Ignorable="d"
                  Title="Sims 4 Mod Manager" Height="780" Width="1320" MinHeight="700" MinWidth="1040"
+                 Icon="Resources/app.ico"
                  ExtendsContentIntoTitleBar="True"
                  WindowBackdropType="Mica"
                  WindowCornerPreference="Round"

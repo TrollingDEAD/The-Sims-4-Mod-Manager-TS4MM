@@ -69,7 +69,7 @@ jobs:
           Set-Content -Path release-notes.md -Value $match.Groups[1].Value.Trim()
 
       - name: Pack release
-        run: vpk pack --packId $env:PACK_ID --packVersion ${{ steps.version.outputs.version }} --packDir publish --mainExe $env:MAIN_EXE --packTitle "$env:PACK_TITLE" --packAuthors "$env:PACK_AUTHORS" --runtime win-x64 --releaseNotes release-notes.md
+        run: vpk pack --packId $env:PACK_ID --packVersion ${{ steps.version.outputs.version }} --packDir publish --mainExe $env:MAIN_EXE --packTitle "$env:PACK_TITLE" --packAuthors "$env:PACK_AUTHORS" --runtime win-x64 --releaseNotes release-notes.md --icon src/Sims4ModManager.App/Resources/app.ico
 
       - name: Upload release to GitHub
         run: vpk upload github --repoUrl https://github.com/${{ github.repository }} --publish --releaseName "$env:PACK_TITLE $env:GITHUB_REF_NAME" --tag $env:GITHUB_REF_NAME --token ${{ secrets.GITHUB_TOKEN }}

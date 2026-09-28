@@ -3,6 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  Title="Packages zusammenführen" Width="920" Height="720" MinWidth="600" MinHeight="480"
+                 Icon="Resources/app.ico"
                  WindowStartupLocation="CenterOwner" ExtendsContentIntoTitleBar="True"
                  WindowBackdropType="Mica" WindowCornerPreference="Round" ResizeMode="CanResize">
     <Grid>
