@@ -13,8 +13,8 @@ adheres to [Semantic Versioning](https://semver.org/).
   exe, all windows, and the release installer now show it instead of a generic placeholder.
 - A startup splash screen. Building the main window scans the whole Mods folder synchronously and
   can take a while on a large collection, during which the app previously showed nothing at all -
-  easy to mistake for a failed launch. The splash appears immediately and stays visible (with an
-  animated progress ring) until the main window is ready.
+  easy to mistake for a failed launch. The splash appears immediately and stays visible (with a
+  spinner and a crisp logo, sized to fit its text at any DPI) until the main window is ready.
 
 ## [1.1.0] - 2026-09-28
 

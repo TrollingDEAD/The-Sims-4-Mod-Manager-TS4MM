@@ -47,9 +47,7 @@ public partial class App : Application
         base.OnStartup(e);
 
         // MainWindow's construction scans the whole Mods folder synchronously and can take a while;
-        // without a splash shown first, the app looks like it failed to launch during that time. The
-        // splash's ProgressRing keeps spinning through that block - WPF animates simple render
-        // transforms like this independently of the UI thread.
+        // without a splash shown first, the app looks like it failed to launch during that time.
         var splash = new SplashWindow();
         splash.Show();
         await Dispatcher.Yield(DispatcherPriority.Render);

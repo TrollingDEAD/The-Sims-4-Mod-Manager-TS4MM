@@ -31,6 +31,8 @@
   <ItemGroup>
     <!-- Also embedded as a WPF resource so Window.Icon="Resources/app.ico" can resolve it at runtime. -->
     <Resource Include="Resources\app.ico" />
+    <!-- Splash-screen logo: a flat PNG at a size that renders crisply without the blur an <Image> gets picking a frame out of the multi-resolution .ico. -->
+    <Resource Include="Resources\logo.png" />
   </ItemGroup>
 
 </Project>
