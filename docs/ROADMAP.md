@@ -50,8 +50,7 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
 
 - Mod archive virus/heuristic scanning: optional integration with a scanning API (e.g. VirusTotal)
   for freshly downloaded script mods, alongside the existing dangerous-pattern scan.
-- Settings/profile backup-and-restore as a single portable file, for moving to a new PC without
-  redoing notes, tags, profiles and trusted-script decisions by hand.
+- ✅ Settings/profile backup-and-restore as a single portable file.
 - Verify-after-write: re-read a file immediately after a toggle/move/merge operation to catch
   silent write failures (locked file, out of disk space, antivirus quarantine) before they're
   mistaken for a successful change.

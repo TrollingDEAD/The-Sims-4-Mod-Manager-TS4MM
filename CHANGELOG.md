@@ -22,6 +22,10 @@ adheres to [Semantic Versioning](https://semver.org/).
 - A keyboard shortcuts reference (F1, or the "?" button in the title bar).
 - An update channel toggle (the rocket icon next to the version number): opt into pre-release
   (beta) app builds instead of only stable releases. Takes effect immediately, no restart needed.
+- Portable settings backup (the sync icon in the title bar): export settings, mod notes/tags/
+  favorites and profiles to a single file, and import them on another PC - useful when moving to
+  a new machine. Deliberately excludes anything machine-specific (Mods folder, window placement,
+  the CurseForge API key).
 - [docs/ROADMAP.md](docs/ROADMAP.md): a public list of planned improvements across mod management,
   performance, reliability, localization, accessibility and tooling.
 

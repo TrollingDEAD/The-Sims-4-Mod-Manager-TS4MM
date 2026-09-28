@@ -98,6 +98,30 @@
                            Click="OpenSetup_Click" ToolTip="Einrichtungsassistent öffnen">
                     <ui:SymbolIcon Symbol="Wand24" />
                 </ui:Button>
+                <Grid Margin="0,0,2,0">
+                    <ui:Button x:Name="BackupMenuButton" Appearance="Transparent" BorderThickness="0" Padding="8,4"
+                               Command="{Binding ToggleBackupMenuCommand}"
+                               ToolTip="Einstellungen, Notizen und Profile exportieren/importieren (z. B. für einen PC-Wechsel)">
+                        <ui:SymbolIcon Symbol="ArrowSync24" />
+                    </ui:Button>
+                    <Popup IsOpen="{Binding IsBackupMenuOpen}" PlacementTarget="{Binding ElementName=BackupMenuButton}"
+                           Placement="Bottom" StaysOpen="False" AllowsTransparency="True" Width="260">
+                        <Border Margin="0,4,0,0" Padding="8" CornerRadius="8" BorderThickness="1"
+                                Background="{DynamicResource ApplicationBackgroundBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                            <StackPanel>
+                                <TextBlock Text="Sicherung" FontWeight="SemiBold" Margin="4,0,4,6" />
+                                <ui:Button Content="Exportieren …" Icon="{ui:SymbolIcon ArrowExportUp24}" HorizontalContentAlignment="Left"
+                                           HorizontalAlignment="Stretch" Margin="0,0,0,4"
+                                           Command="{Binding ExportBackupCommand}"
+                                           ToolTip="Einstellungen, Mod-Notizen/Tags/Favoriten und Profile in eine Datei speichern." />
+                                <ui:Button Content="Importieren …" Icon="{ui:SymbolIcon ArrowImport24}" HorizontalContentAlignment="Left"
+                                           HorizontalAlignment="Stretch"
+                                           Command="{Binding ImportBackupCommand}"
+                                           ToolTip="Eine zuvor exportierte Sicherung übernehmen (startet die App neu)." />
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                </Grid>
                 <ui:Button Appearance="Transparent" BorderThickness="0" Padding="8,4" Margin="0,0,2,0"
                            Command="{Binding ShowShortcutsCommand}" ToolTip="Tastenkürzel anzeigen (F1)">
                     <ui:SymbolIcon Symbol="QuestionCircle24" />

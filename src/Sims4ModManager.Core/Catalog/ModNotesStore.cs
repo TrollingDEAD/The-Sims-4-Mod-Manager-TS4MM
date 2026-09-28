@@ -43,6 +43,9 @@ public sealed class ModNotesStore
 
     public ModNote? Get(string modId) => Notes.TryGetValue(modId, out var note) ? note : null;
 
+    /// <summary>All notes, keyed by mod ID; for bundling into a portable settings backup.</summary>
+    public IReadOnlyDictionary<string, ModNote> AllNotes => Notes;
+
     public IReadOnlyCollection<string> AllTags =>
         Notes.Values.SelectMany(n => n.Tags).Distinct(StringComparer.CurrentCultureIgnoreCase)
             .OrderBy(t => t, StringComparer.CurrentCultureIgnoreCase).ToList();

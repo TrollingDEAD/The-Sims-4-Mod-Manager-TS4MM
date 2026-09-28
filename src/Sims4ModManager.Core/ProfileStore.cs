@@ -26,6 +26,9 @@ public sealed class ProfileStore
             "Sims4ModManager", "profiles");
     }
 
+    /// <summary>All profiles, for bundling into a portable settings backup.</summary>
+    public IReadOnlyList<ModProfile> LoadAllProfiles() => LoadAll().Select(e => e.Profile).ToList();
+
     public IReadOnlyList<string> ListProfileNames() =>
         LoadAll()
             .Select(p => p.Profile.Name)

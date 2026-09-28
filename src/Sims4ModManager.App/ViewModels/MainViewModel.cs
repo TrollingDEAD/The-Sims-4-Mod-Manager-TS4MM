@@ -212,6 +212,65 @@ public partial class MainViewModel : ObservableObject
         "Esc – aktives Suchfeld leeren\n" +
         "Enter – bestes Ergebnis der Überall-Suche öffnen"));
 
+    // --- Portable settings backup (export/import for moving to a new PC) ---------------------------
+
+    [ObservableProperty]
+    private bool isBackupMenuOpen;
+
+    [RelayCommand]
+    private void ToggleBackupMenu() => IsBackupMenuOpen = !IsBackupMenuOpen;
+
+    private const string BackupFileFilter = "Sims4ModManager-Sicherung (*.s4mmbackup.json)|*.s4mmbackup.json|Alle Dateien (*.*)|*.*";
+
+    [RelayCommand]
+    private void ExportBackup()
+    {
+        IsBackupMenuOpen = false;
+        string? path = _dialogs.PickSaveFile(L.T("Sicherung exportieren"), L.T(BackupFileFilter),
+            $"Sims4ModManager-Sicherung-{DateTime.Now:yyyy-MM-dd}.s4mmbackup.json");
+        if (path is null)
+            return;
+        try
+        {
+            var backup = PortableBackupService.Capture(_settingsStore, _notes, _profileStore);
+            PortableBackupService.SaveToFile(backup, path);
+            StatusMessage = L.F("Sicherung gespeichert: {0}", path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            StatusMessage = L.F("Sicherung konnte nicht gespeichert werden: {0}", ex.Message);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportBackupAsync()
+    {
+        IsBackupMenuOpen = false;
+        string? path = _dialogs.PickFiles(L.T("Sicherung importieren"), L.T(BackupFileFilter)).FirstOrDefault();
+        if (path is null)
+            return;
+
+        var backup = PortableBackupService.TryLoadFromFile(path);
+        if (backup is null)
+        {
+            StatusMessage = L.T("Diese Datei ist keine gültige Sims4ModManager-Sicherung.");
+            return;
+        }
+
+        bool confirmed = await _dialogs.ConfirmAsync(
+            L.T("Sicherung importieren"),
+            L.F("Einstellungen, {0} Notiz(en)/Favorit(en) und {1} Profil(e) werden übernommen (bestehende Profile mit " +
+                "gleichem Namen werden ersetzt). Die App startet danach neu.", backup.Notes.Count, backup.Profiles.Count),
+            L.T("Importieren & neu starten"), L.T("Abbrechen"));
+        if (!confirmed)
+            return;
+
+        PortableBackupService.Apply(backup, _settingsStore, _notes, _profileStore);
+        if (Environment.ProcessPath is { } exe)
+            Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
+        System.Windows.Application.Current.Shutdown();
+    }
+
     /// <summary>Label of the language button: the language it switches to.</summary>
     public string OtherLanguageLabel => L.IsGerman ? "EN" : "DE";
 
