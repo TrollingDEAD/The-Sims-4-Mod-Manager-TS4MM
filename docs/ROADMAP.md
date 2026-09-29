@@ -26,7 +26,8 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
 - Install directly from a CurseForge project URL/ID: paste a link, resolve it through the existing
   `CurseForgeClient`, and install through the change journal - the counterpart to the fingerprint-based
   update checker already in the "Updates" tab, for getting a mod in the first place rather than only
-  updating one already installed.
+  updating one already installed. Longer-term, this could grow into a full in-app mod browser: install
+  buttons, automatic dependency installs, and automatic mod-list sorting after each install.
 
 ## Conflict resolution
 
