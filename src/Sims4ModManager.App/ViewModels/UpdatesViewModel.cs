@@ -72,7 +72,8 @@ public partial class UpdatesViewModel : ObservableObject
     [RelayCommand]
     private void OpenApiKeyPage() => OpenUrl(CurseForgeClient.ApiKeyUrl);
 
-    private CurseForgeClient? CreateClient() =>
+    /// <summary>Internal so the CurseForge Browse tab can reuse this VM's key-handling as its single source of truth.</summary>
+    internal CurseForgeClient? CreateClient() =>
         SecretProtector.Unprotect(_settings.Load().CurseForgeApiKeyProtected) is { } key ? new CurseForgeClient(key) : null;
 
     [RelayCommand]

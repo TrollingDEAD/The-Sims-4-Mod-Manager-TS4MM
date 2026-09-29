@@ -5,6 +5,78 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- A "Browse" sub-tab under "CurseForge" (renamed from "Updates", which is now its sibling
+  sub-tab): search and browse the Sims 4 CurseForge catalog by keyword, category and sort order
+  (Featured/Popularity/Last updated/Name), with a tile grid matching the Catalog tab's visual
+  style. Installing a mod automatically resolves and installs its required and optional
+  dependencies too, then sorts the result into its category/creator folder the same way a manual
+  "Sortieren" pass would - the whole install (mod + dependencies + sort) undoes as a single History
+  entry. Mods that only allow downloads on the CurseForge website are detected up front and the
+  install is cancelled with an explanation, before anything is downloaded. Shares the same API key
+  as the Updates sub-tab. Verified against the live CurseForge API: a real install correctly found
+  and installed 12 real dependencies, created the expected category/creator folders, and Undo
+  cleanly reversed all 38 affected files in one step.
+- Tab notification badges: a small red-dot/count badge on the "Updates", "Diagnose" and
+  "Übersicht" tab icons when there's something to look at (updates available, new errors since
+  the last game version, unresolved health findings) - the same idea as a phone app icon's
+  notification badge. The Updates badge reflects the last manual "Check now" run; the other two
+  update automatically with every mod rescan.
+
+### Fixed
+
+- In the mod list, a mod's name started further right than its neighbors' whenever it showed the
+  conflict-warning triangle - the icon was `Collapsed` (removes it from layout) rather than
+  `Hidden` (keeps its space reserved) when there was no conflict, so the name text shifted left to
+  fill the gap. Every row's name now starts at the same position regardless of whether the icon is
+  showing; the same Hidden-not-Collapsed approach should be reused for any further per-mod status
+  icons added to that slot later (update available, broken, ...).
+- The "Affected: N" expander on each finding in the Overview tab's Problems list was a different
+  width depending on how many action buttons that particular finding happened to show (0, 1 or 2,
+  of varying widths) - it was nested inside the same row as those buttons, so it only got whatever
+  space they left over. Moved it to its own row below, so it always spans the full card width.
+- Disabling a mod could take a noticeable moment to register, and toggling a mod you'd just
+  toggled (or clicking a different mod's checkbox right after) often silently did nothing.
+  Found and confirmed by actually driving the app (Windows UI Automation + screenshots) against a
+  real 2266-mod library rather than reading the code alone - three compounding causes, all fixed:
+  - The mod list's checkbox column was a `DataGridCheckBoxColumn`, which routes every click through
+    the grid's cell "current/edit transaction" machinery: a row that wasn't already the current
+    cell needed one click just to focus it and a second to actually toggle it - the "not working"
+    symptom for anyone scanning down a list unchecking mods one at a time. Replaced it with a plain
+    `CheckBox` in a template column (matching the star/favorite column next to it), which responds
+    to every click immediately regardless of which row was current before.
+  - That same edit-transaction state could still be open when the toggle's rescan applied its
+    result, throwing an unhandled `InvalidOperationException` ("'Refresh' ist während einer
+    AddNew- oder EditItem-Transaktion nicht zulässig") - reliably reproducible by toggling a second
+    mod before the first one's rescan had finished. The toggle handler now explicitly commits any
+    pending grid edit first.
+  - The toggle handler also rebuilt the whole mod list (a full folder rescan + conflict detection)
+    synchronously from inside the grid's own edit-commit callback, blocking the UI thread and
+    replacing every row's view-model object on every single click. The rescan now runs on a
+    background thread (the same pattern already used for the startup scan) and updates existing
+    rows in place instead of clearing and re-adding all of them.
+- The unchecked checkbox for a disabled mod rendered as a flat, borderless gray square instead of a
+  normal checkbox outline, hard to even recognize as a checkbox - a side effect of
+  `DataGridCheckBoxColumn`'s own styling combined with the dimmed-row opacity. Fixed by the same
+  template-column change above, which uses the app's normal Fluent-styled checkbox.
+- Picking a new accent color left some controls ("Play", "Fix all safe ones", the tab notification
+  badges) showing the *previous* accent color indefinitely, while others (toggle switches,
+  checkboxes) updated immediately - confirmed with actual before/after pixel sampling of a running
+  instance. `ThemeService.Apply` applied the accent color *after* re-applying the theme; some
+  control styles only pick up the accent while their theme resources are being (re-)applied, so
+  anything styled that way kept resolving the color that was current before this call. Swapped the
+  order (accent first, then theme) - every accent-colored control now updates together. While
+  investigating, also enlarged the picker's swatches (28px, 2px apart) and gave them more breathing
+  room, since a mis-click there was a real (if secondary) risk on top of the above.
+- Three icons rendered as a blank/broken glyph instead of a symbol: the "Export list..." button,
+  the mod list's "replaces game content" indicator, and the "Als Sammelordner" button. All three
+  referenced a Wpf.Ui icon variant whose codepoint falls outside the Unicode range the Segoe
+  Fluent Icons font actually covers, so nothing showed up regardless of theme or DPI. Swapped each
+  for an equivalent icon with a codepoint the font supports.
+
 ## [1.2.0] - 2026-09-29
 
 ### Changed

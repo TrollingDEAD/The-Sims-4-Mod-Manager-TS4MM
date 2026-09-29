@@ -168,11 +168,14 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Button Width="28" Height="28" Margin="2" Padding="0" Cursor="Hand"
+                                            <!-- Sized/spaced generously on purpose: at the old 28px/2px-margin size, adjacent
+                                                 swatches sat close enough together that a click could register on the wrong
+                                                 one - reported as "clicking one color selects another". -->
+                                            <Button Width="36" Height="36" Margin="4" Padding="0" Cursor="Hand"
                                                     Background="Transparent" BorderThickness="0"
                                                     Command="{Binding DataContext.SetAccentColorCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}" ToolTip="{Binding}">
-                                                <Ellipse Width="20" Height="20" Fill="{Binding Converter={StaticResource HexToBrush}}"
+                                                <Ellipse Width="24" Height="24" Fill="{Binding Converter={StaticResource HexToBrush}}"
                                                          Stroke="{DynamicResource CardStrokeColorDefaultBrush}" StrokeThickness="1" />
                                             </Button>
                                         </DataTemplate>
@@ -234,7 +237,13 @@
                 <TabItem DataContext="{Binding Health}">
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="HeartPulse24" Margin="0,0,6,0" />
+                            <Grid Margin="0,0,6,0">
+                                <ui:SymbolIcon Symbol="HeartPulse24" />
+                                <Border Style="{StaticResource TabBadge}" Visibility="{Binding ProblemCount, Converter={StaticResource CountToVisibility}}"
+                                        ToolTip="{Binding ProblemCount, StringFormat='{}{0} Problem(e)'}">
+                                    <TextBlock Text="{Binding ProblemCount}" Style="{StaticResource TabBadgeText}" />
+                                </Border>
+                            </Grid>
                             <TextBlock Text="Übersicht" />
                         </StackPanel>
                     </TabItem.Header>
@@ -343,7 +352,7 @@
                                         <TextBlock Text="Mods" Style="{StaticResource SectionHeader}" />
                                     </StackPanel>
                                     <WrapPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
-                                        <ui:Button Content="Liste exportieren …" Icon="{ui:SymbolIcon ArrowExport24}" Margin="0,0,6,4"
+                                        <ui:Button Content="Liste exportieren …" Icon="{ui:SymbolIcon ArrowExportUp24}" Margin="0,0,6,4"
                                                    Command="{Binding ExportModListCommand}"
                                                    ToolTip="Mod-Liste als Text (für Discord und Foren) oder CSV (für Excel) speichern." />
                                         <ui:Button Icon="{ui:SymbolIcon Copy24}" Margin="0,0,6,4" Command="{Binding CopyModListCommand}"
@@ -433,6 +442,11 @@
                                             <Border Margin="0,0,0,8" Padding="12,10" CornerRadius="8" BorderThickness="1"
                                                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                                                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                                <!-- The Expander below is a sibling of this DockPanel, not nested inside its fill column: nesting
+                                                     it there made its width depend on how many action buttons a given card happened to have
+                                                     docked to the right (0, 1 or 2, of varying widths), so "Affected: N" ended up a different
+                                                     width on almost every card. As a sibling it always spans the full card width instead. -->
+                                                <StackPanel>
                                                 <DockPanel>
                                                     <ui:SymbolIcon DockPanel.Dock="Left" Margin="0,0,12,0" FontSize="20" VerticalAlignment="Top">
                                                         <ui:SymbolIcon.Style>
@@ -468,20 +482,21 @@
                                                             <Run Text="{Binding Title, Mode=OneWay}" /><Run Text="  ·  " Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><Run Text="{Binding Category, Mode=OneWay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="Normal" />
                                                         </TextBlock>
                                                         <TextBlock Style="{StaticResource CaptionText}" Text="{Binding Description}" Margin="0,3,0,0" />
-                                                        <Expander Margin="0,6,0,0" Header="{Binding PathsHeader}"
-                                                                  Visibility="{Binding HasPaths, Converter={StaticResource BoolToVisibility}}">
-                                                            <ItemsControl ItemsSource="{Binding PathPreview}" Margin="4,4,0,0">
-                                                                <ItemsControl.ItemTemplate>
-                                                                    <DataTemplate>
-                                                                        <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas" FontSize="11"
-                                                                                   Style="{StaticResource CaptionText}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
-                                                                                   ToolTip="{Binding}" />
-                                                                    </DataTemplate>
-                                                                </ItemsControl.ItemTemplate>
-                                                            </ItemsControl>
-                                                        </Expander>
                                                     </StackPanel>
                                                 </DockPanel>
+                                                <Expander Margin="32,6,0,0" Header="{Binding PathsHeader}"
+                                                          Visibility="{Binding HasPaths, Converter={StaticResource BoolToVisibility}}">
+                                                    <ItemsControl ItemsSource="{Binding PathPreview}" Margin="4,4,0,0">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas" FontSize="11"
+                                                                           Style="{StaticResource CaptionText}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                                           ToolTip="{Binding}" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </Expander>
+                                                </StackPanel>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -581,13 +596,28 @@
                                         </Style>
                                     </DataGrid.RowStyle>
                                     <DataGrid.Columns>
-                                        <DataGridCheckBoxColumn Header="Aktiv" Binding="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}" Width="60">
-                                            <DataGridCheckBoxColumn.HeaderStyle>
+                                        <!-- A plain CheckBox in a template column (like the star column below), not
+                                             DataGridCheckBoxColumn: that type routes every click through the grid's
+                                             cell current/edit-transaction machinery, which (a) needs a first "warm-up"
+                                             click on any row that isn't already the current cell before a second click
+                                             actually toggles it, and (b) left an edit transaction open that a
+                                             same-tick rescan could collide with (ModEditCommitNeeded works around the
+                                             version of this that still reaches this column via the row/cell selection
+                                             below, but a template column's live-bound CheckBox never opens one, so
+                                             every click here toggles immediately regardless of which row was current). -->
+                                        <DataGridTemplateColumn Header="Aktiv" Width="60" IsReadOnly="True">
+                                            <DataGridTemplateColumn.HeaderStyle>
                                                 <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
                                                     <Setter Property="ToolTip" Value="Häkchen setzen/entfernen schaltet den Mod sofort ein bzw. aus." />
                                                 </Style>
-                                            </DataGridCheckBoxColumn.HeaderStyle>
-                                        </DataGridCheckBoxColumn>
+                                            </DataGridTemplateColumn.HeaderStyle>
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}"
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
                                         <DataGridTemplateColumn Header="★" Width="34" SortMemberPath="IsFavorite" IsReadOnly="True" CanUserSort="True">
                                             <DataGridTemplateColumn.HeaderStyle>
                                                 <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
@@ -620,11 +650,17 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <DockPanel VerticalAlignment="Center">
+                                                        <!-- Hidden, not Collapsed, when there's no conflict: Collapsed removes the icon from
+                                                             layout entirely, so the name text starts further left on every row that has no
+                                                             warning - misaligning it against rows that do. Hidden keeps the slot's width
+                                                             reserved either way, so names always start at the same X. Apply the same
+                                                             Hidden-not-Collapsed pattern to any further per-mod status icons added here later
+                                                             (update available, broken, ...), each in its own fixed-size slot. -->
                                                         <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Warning16" Margin="0,0,6,0"
                                                                        Foreground="{StaticResource WarningBrush}" ToolTip="{Binding ConflictTooltip}">
                                                             <ui:SymbolIcon.Style>
                                                                 <Style TargetType="ui:SymbolIcon">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Setter Property="Visibility" Value="Hidden" />
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding HasConflict}" Value="True">
                                                                             <Setter Property="Visibility" Value="Visible" />
@@ -652,7 +688,7 @@
                                                         <ui:SymbolIcon DockPanel.Dock="Right" Symbol="Note16" Margin="6,0,0,0"
                                                                        Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" ToolTip="{Binding NoteTooltip}"
                                                                        Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
-                                                        <ui:SymbolIcon DockPanel.Dock="Right" Symbol="ArrowSwap16" Margin="6,0,0,0"
+                                                        <ui:SymbolIcon DockPanel.Dock="Right" Symbol="ArrowSwap20" Margin="6,0,0,0"
                                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" ToolTip="{Binding GameReplacementTooltip}"
                                                                        Visibility="{Binding ReplacesGame, Converter={StaticResource BoolToVisibility}}" />
                                                         <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}" />
@@ -785,7 +821,7 @@
                                                 </Border>
                                                 <WrapPanel Margin="0,10,0,0">
                                                     <ui:Button Content="Im Explorer zeigen" Icon="{ui:SymbolIcon Open24}" Margin="0,0,6,6" Command="{Binding OpenInExplorerCommand}" />
-                                                    <ui:Button Content="Als Sammelordner" Icon="{ui:SymbolIcon FolderMultiple24}" Margin="0,0,6,6"
+                                                    <ui:Button Content="Als Sammelordner" Icon="{ui:SymbolIcon FolderMultiple16}" Margin="0,0,6,6"
                                                                Command="{Binding MakeCollectionCommand}"
                                                                Visibility="{Binding CanMakeCollection, Converter={StaticResource BoolToVisibility}}"
                                                                ToolTip="Jede Datei und jeder Unterordner dieses Ordners wird ein eigener Mod (z. B. für selbst angelegte Sammelordner wie „Haare“)." />
@@ -1619,7 +1655,13 @@
                 <TabItem DataContext="{Binding Diagnose}">
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Stethoscope24" Margin="0,0,6,0" />
+                            <Grid Margin="0,0,6,0">
+                                <ui:SymbolIcon Symbol="Stethoscope24" />
+                                <Border Style="{StaticResource TabBadge}" Visibility="{Binding NewErrorCount, Converter={StaticResource CountToVisibility}}"
+                                        ToolTip="{Binding NewErrorCount, StringFormat='{}{0} neue Fehler'}">
+                                    <TextBlock Text="{Binding NewErrorCount}" Style="{StaticResource TabBadgeText}" />
+                                </Border>
+                            </Grid>
                             <TextBlock Text="Diagnose" />
                         </StackPanel>
                     </TabItem.Header>
@@ -2471,28 +2513,34 @@
                     </Grid>
                 </TabItem>
 
-                <!-- ============================== Updates (CurseForge) ============================== -->
+                <!-- ============================== CurseForge (Updates + Browse) ============================== -->
                 <TabItem DataContext="{Binding Updates}">
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="ArrowDownload24" Margin="0,0,6,0" />
-                            <TextBlock Text="Updates" />
+                            <Grid Margin="0,0,6,0">
+                                <ui:SymbolIcon Symbol="ArrowDownload24" />
+                                <Border Style="{StaticResource TabBadge}" Visibility="{Binding UpdateCount, Converter={StaticResource CountToVisibility}}"
+                                        ToolTip="{Binding UpdateCount, StringFormat='{}{0} Update(s) verfügbar'}">
+                                    <TextBlock Text="{Binding UpdateCount}" Style="{StaticResource TabBadgeText}" />
+                                </Border>
+                            </Grid>
+                            <TextBlock Text="CurseForge" />
                         </StackPanel>
                     </TabItem.Header>
-                    <Grid Margin="4,10,4,4" x:Name="UpdatesRoot">
+                    <Grid Margin="4,10,4,4">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <Border Padding="14,10" CornerRadius="8" BorderThickness="1" Margin="0,0,0,10"
+                        <!-- Shared by both sub-tabs below: one API key powers checking installed mods for
+                             updates and browsing/installing new ones. -->
+                        <Border Grid.Row="0" Padding="14,10" CornerRadius="8" BorderThickness="1" Margin="0,0,0,10"
                                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
                             <StackPanel>
                                 <TextBlock Text="CurseForge" Style="{StaticResource SectionHeader}" />
                                 <TextBlock Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,2,0,8"
-                                           Text="Erkennt Mods von CurseForge an ihrem Datei-Fingerabdruck und zeigt neuere Versionen an. Die Update-Prüfung braucht einen eigenen, kostenlosen API-Schlüssel von CurseForge – er wird verschlüsselt für dein Windows-Konto gespeichert und nur an api.curseforge.com gesendet." />
+                                           Text="Erkennt installierte Mods von CurseForge an ihrem Datei-Fingerabdruck und zeigt neuere Versionen an, und lässt neue Mods direkt aus dem Katalog suchen und installieren. Beides braucht einen eigenen, kostenlosen API-Schlüssel von CurseForge – er wird verschlüsselt für dein Windows-Konto gespeichert und nur an api.curseforge.com gesendet." />
                                 <DockPanel Visibility="{Binding HasApiKey, Converter={StaticResource InverseBoolToVisibility}}">
                                     <ui:Button DockPanel.Dock="Right" Content="Schlüssel beantragen" Icon="{ui:SymbolIcon Open24}" Margin="6,0,0,0"
                                                Command="{Binding OpenApiKeyPageCommand}" ToolTip="{Binding ApiKeyUrl}" />
@@ -2501,62 +2549,170 @@
                                     <ui:TextBox Text="{Binding ApiKeyInput, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="CurseForge-API-Schlüssel einfügen …" Icon="{ui:SymbolIcon Key24}" />
                                 </DockPanel>
                                 <DockPanel Visibility="{Binding HasApiKey, Converter={StaticResource BoolToVisibility}}">
-                                    <ui:Button DockPanel.Dock="Right" Content="Schlüssel entfernen" Icon="{ui:SymbolIcon Delete24}" Margin="6,0,0,0" Command="{Binding RemoveApiKeyCommand}" />
-                                    <ui:Button DockPanel.Dock="Right" Content="Abbrechen" Margin="6,0,0,0" Command="{Binding CancelCommand}"
-                                               Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-                                    <StackPanel Orientation="Horizontal">
-                                        <ui:Button Content="Nach Updates suchen" Icon="{ui:SymbolIcon ArrowSync24}" Appearance="Primary"
-                                                   Command="{Binding CheckCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
-                                        <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="12,0,8,0"
-                                                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-                                        <TextBlock Text="{Binding BusyText}" Style="{StaticResource CaptionText}" VerticalAlignment="Center"
-                                                   Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-                                    </StackPanel>
+                                    <ui:Button DockPanel.Dock="Right" Content="Schlüssel entfernen" Icon="{ui:SymbolIcon Delete24}" Command="{Binding RemoveApiKeyCommand}" />
+                                    <TextBlock Text="Schlüssel gespeichert." Style="{StaticResource CaptionText}" VerticalAlignment="Center" />
                                 </DockPanel>
                             </StackPanel>
                         </Border>
 
-                        <DockPanel Grid.Row="1" Margin="0,0,0,6">
-                            <CheckBox DockPanel.Dock="Right" Content="Nur Mods mit Update" IsChecked="{Binding OnlyUpdates}" />
-                            <TextBlock Text="{Binding Summary}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center" TextWrapping="Wrap" />
-                        </DockPanel>
+                        <TabControl Grid.Row="1" x:Name="CurseForgeSubTabs" SelectionChanged="CurseForgeSubTabs_SelectionChanged"
+                                    Visibility="{Binding HasApiKey, Converter={StaticResource BoolToVisibility}}">
+                            <!-- Updates: installed CurseForge mods vs. newer releases -->
+                            <TabItem Header="Updates">
+                                <Grid Margin="4,10,4,4" x:Name="UpdatesRoot">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
 
-                        <ui:ListView Grid.Row="2" x:Name="UpdateList" ItemsSource="{Binding Mods}" MouseDoubleClick="UpdateList_MouseDoubleClick">
-                            <ui:ListView.View>
-                                <ui:GridView>
-                                    <ui:GridViewColumn Header="CurseForge-Projekt" Width="220">
-                                        <ui:GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Text="{Binding Authors}" Style="{StaticResource HideWhenEmpty}" />
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ui:GridViewColumn.CellTemplate>
-                                    </ui:GridViewColumn>
-                                    <ui:GridViewColumn Header="Im Mods-Ordner" Width="180" DisplayMemberBinding="{Binding LocalLabel}" />
-                                    <ui:GridViewColumn Header="Installiert" Width="180" DisplayMemberBinding="{Binding InstalledLabel}" />
-                                    <ui:GridViewColumn Header="Neueste" Width="180" DisplayMemberBinding="{Binding LatestLabel}" />
-                                    <ui:GridViewColumn Header="Status" Width="230">
-                                        <ui:GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding StatusLabel}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                                                    <ui:Button Content="Aktualisieren" Icon="{ui:SymbolIcon ArrowDownload24}" Appearance="Primary" Padding="8,2"
-                                                               Command="{Binding DataContext.UpdateModCommand, ElementName=UpdatesRoot}" CommandParameter="{Binding}"
-                                                               Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibility}}" />
-                                                    <ui:Button Icon="{ui:SymbolIcon Open24}" Margin="4,0,0,0" Padding="6,2" ToolTip="CurseForge-Seite öffnen"
-                                                               Command="{Binding DataContext.OpenPageCommand, ElementName=UpdatesRoot}" CommandParameter="{Binding}" />
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ui:GridViewColumn.CellTemplate>
-                                    </ui:GridViewColumn>
-                                </ui:GridView>
-                            </ui:ListView.View>
-                        </ui:ListView>
+                                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                                        <ui:Button DockPanel.Dock="Right" Content="Abbrechen" Margin="6,0,0,0" Command="{Binding CancelCommand}"
+                                                   Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+                                        <ui:Button DockPanel.Dock="Right" Content="Nach Updates suchen" Icon="{ui:SymbolIcon ArrowSync24}" Appearance="Primary"
+                                                   Command="{Binding CheckCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+                                        <ui:ProgressRing DockPanel.Dock="Right" IsIndeterminate="True" Width="16" Height="16" Margin="12,0,8,0"
+                                                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+                                        <TextBlock Text="{Binding BusyText}" Style="{StaticResource CaptionText}" VerticalAlignment="Center"
+                                                   Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+                                    </DockPanel>
 
-                        <TextBlock Grid.Row="3" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,8,0,0"
-                                   Text="Mods von Patreon, Tumblr oder eigenen Seiten lassen sich nicht automatisch prüfen. Trage ihren Download-Link in den Notizen ein (Tab „Mods“ → Details) – dann findest du die Quelle jederzeit wieder. Nach Spiel-Updates warnt die Übersicht vor veralteten Skript- und Tuning-Mods." />
+                                    <DockPanel Grid.Row="1" Margin="0,0,0,6">
+                                        <CheckBox DockPanel.Dock="Right" Content="Nur Mods mit Update" IsChecked="{Binding OnlyUpdates}" />
+                                        <TextBlock Text="{Binding Summary}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                    </DockPanel>
+
+                                    <ui:ListView Grid.Row="2" x:Name="UpdateList" ItemsSource="{Binding Mods}" MouseDoubleClick="UpdateList_MouseDoubleClick">
+                                        <ui:ListView.View>
+                                            <ui:GridView>
+                                                <ui:GridViewColumn Header="CurseForge-Projekt" Width="220">
+                                                    <ui:GridViewColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <StackPanel>
+                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Text="{Binding Authors}" Style="{StaticResource HideWhenEmpty}" />
+                                                            </StackPanel>
+                                                        </DataTemplate>
+                                                    </ui:GridViewColumn.CellTemplate>
+                                                </ui:GridViewColumn>
+                                                <ui:GridViewColumn Header="Im Mods-Ordner" Width="180" DisplayMemberBinding="{Binding LocalLabel}" />
+                                                <ui:GridViewColumn Header="Installiert" Width="180" DisplayMemberBinding="{Binding InstalledLabel}" />
+                                                <ui:GridViewColumn Header="Neueste" Width="180" DisplayMemberBinding="{Binding LatestLabel}" />
+                                                <ui:GridViewColumn Header="Status" Width="230">
+                                                    <ui:GridViewColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding StatusLabel}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                                <ui:Button Content="Aktualisieren" Icon="{ui:SymbolIcon ArrowDownload24}" Appearance="Primary" Padding="8,2"
+                                                                           Command="{Binding DataContext.UpdateModCommand, ElementName=UpdatesRoot}" CommandParameter="{Binding}"
+                                                                           Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibility}}" />
+                                                                <ui:Button Icon="{ui:SymbolIcon Open24}" Margin="4,0,0,0" Padding="6,2" ToolTip="CurseForge-Seite öffnen"
+                                                                           Command="{Binding DataContext.OpenPageCommand, ElementName=UpdatesRoot}" CommandParameter="{Binding}" />
+                                                            </StackPanel>
+                                                        </DataTemplate>
+                                                    </ui:GridViewColumn.CellTemplate>
+                                                </ui:GridViewColumn>
+                                            </ui:GridView>
+                                        </ui:ListView.View>
+                                    </ui:ListView>
+
+                                    <TextBlock Grid.Row="3" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                               Text="Mods von Patreon, Tumblr oder eigenen Seiten lassen sich nicht automatisch prüfen. Trage ihren Download-Link in den Notizen ein (Tab „Mods“ → Details) – dann findest du die Quelle jederzeit wieder. Nach Spiel-Updates warnt die Übersicht vor veralteten Skript- und Tuning-Mods." />
+                                </Grid>
+                            </TabItem>
+
+                            <!-- Browse: search the Sims 4 catalog and install -->
+                            <TabItem Header="Durchsuchen" DataContext="{Binding DataContext.Browse, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Grid Margin="4,10,4,4" x:Name="BrowseRoot">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <WrapPanel Grid.Row="0" Margin="0,0,0,8">
+                                        <ui:TextBox Width="260" Margin="0,0,8,6" PlaceholderText="Mod suchen …" Icon="{ui:SymbolIcon Search24}"
+                                                    ClearButtonEnabled="True" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=400}" />
+                                        <ComboBox Width="190" Margin="0,0,8,6" ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}"
+                                                  DisplayMemberPath="Label" ToolTip="Kategorie" />
+                                        <ComboBox Width="170" Margin="0,0,8,6" ItemsSource="{Binding SortChoices}" SelectedItem="{Binding SelectedSort}"
+                                                  DisplayMemberPath="Label" ToolTip="Sortierung" />
+                                        <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="4,0,8,6"
+                                                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+                                        <TextBlock Text="{Binding BusyText}" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Margin="0,0,0,6"
+                                                   Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+                                    </WrapPanel>
+
+                                    <TextBlock Grid.Row="1" Text="{Binding Summary}" Style="{StaticResource SectionHeader}" Margin="0,0,0,6" TextWrapping="Wrap" />
+
+                                    <Grid Grid.Row="2">
+                                        <ListBox x:Name="BrowseList" ItemsSource="{Binding Results}"
+                                                 VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                                                 VirtualizingPanel.ScrollUnit="Pixel" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                 Background="Transparent" BorderThickness="0">
+                                            <ListBox.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <ui:VirtualizingWrapPanel ItemSize="156,232" SpacingMode="Uniform" StretchItems="False" />
+                                                </ItemsPanelTemplate>
+                                            </ListBox.ItemsPanel>
+                                            <ListBox.ItemContainerStyle>
+                                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                                    <Setter Property="Padding" Value="4" />
+                                                    <Setter Property="Margin" Value="3" />
+                                                    <Setter Property="ToolTip" Value="{Binding Model.Summary}" />
+                                                </Style>
+                                            </ListBox.ItemContainerStyle>
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Width="140" Height="216">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="100" />
+                                                            <RowDefinition Height="*" />
+                                                            <RowDefinition Height="Auto" />
+                                                        </Grid.RowDefinitions>
+                                                        <Border Grid.Row="0" CornerRadius="6" Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                                                            <Grid>
+                                                                <ui:SymbolIcon Symbol="Image24" FontSize="26" Foreground="{DynamicResource TextFillColorDisabledBrush}" />
+                                                                <Image Source="{Binding LogoUrl}" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                            </Grid>
+                                                        </Border>
+                                                        <StackPanel Grid.Row="1" Margin="2,6,2,0">
+                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" MaxHeight="32" />
+                                                            <TextBlock Text="{Binding Authors}" FontSize="11" Style="{StaticResource CaptionText}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                                            <TextBlock Text="{Binding CategoryLabel}" FontSize="10" Style="{StaticResource HideWhenEmpty}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                                                            <ui:Button Content="Installieren" Icon="{ui:SymbolIcon ArrowDownload24}" Appearance="Primary" Padding="8,2"
+                                                                       Command="{Binding DataContext.InstallCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" />
+                                                            <ui:Button Icon="{ui:SymbolIcon Open24}" Margin="4,0,0,0" Padding="6,2" ToolTip="CurseForge-Seite öffnen"
+                                                                       Command="{Binding DataContext.OpenPageCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                        <TextBlock Text="Keine Treffer – Suchbegriff oder Kategorie ändern.">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource EmptyStateText}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasItems, ElementName=BrowseList}" Value="False">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+
+                                    <ui:Button Grid.Row="3" Content="Mehr laden" HorizontalAlignment="Center" Margin="0,10,0,0"
+                                               Command="{Binding LoadMoreCommand}" Visibility="{Binding HasMore, Converter={StaticResource BoolToVisibility}}"
+                                               IsEnabled="{Binding IsLoadingMore, Converter={StaticResource InverseBool}}" />
+                                </Grid>
+                            </TabItem>
+                        </TabControl>
                     </Grid>
                 </TabItem>
             </TabControl>

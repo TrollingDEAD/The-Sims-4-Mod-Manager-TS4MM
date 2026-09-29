@@ -84,4 +84,21 @@ public static class ModClassifier
             .ThenByDescending(g => g.Sum(f => f.File.SizeBytes))
             .First().Key;
     }
+
+    /// <summary>Category (and, for CAS mods, the dominant CAS sub-category) of a whole mod, given the
+    /// catalog info already scanned for its files. Used both by the Catalog tab and by anything that
+    /// needs to classify freshly-installed mods without going through that tab's own view model
+    /// (e.g. the CurseForge Browse install pipeline).</summary>
+    public static (ContentCategory Category, CasCategory Cas) ClassifyMod(ModEntry mod, IReadOnlyDictionary<ModFileInfo, PackageCatalogInfo> info)
+    {
+        var files = mod.Files.Select(f => (File: f, Info: info.TryGetValue(f, out var i) ? i : null)).Where(x => x.Info is not null).ToList();
+        if (files.Count == 0)
+            return (mod.ContainsScript ? ContentCategory.Script : ContentCategory.Other, CasCategory.None);
+        var category = Classify(files.Select(x => (x.File, x.Info!.Category)));
+        var cas = category == ContentCategory.Cas
+            ? files.Where(x => x.Info!.Category == ContentCategory.Cas).GroupBy(x => x.Info!.CasCategory)
+                .OrderByDescending(g => g.Count()).First().Key
+            : CasCategory.None;
+        return (category, cas);
+    }
 }

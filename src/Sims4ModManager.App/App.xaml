@@ -17,6 +17,7 @@
             <services:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
             <services:FractionWidthConverter x:Key="FractionWidth" />
             <services:HexToBrushConverter x:Key="HexToBrush" />
+            <services:CountToVisibilityConverter x:Key="CountToVisibility" />
 
             <!-- Status colors: mid tones that stay readable on both dark and light backgrounds. -->
             <SolidColorBrush x:Key="DangerBrush" Color="#F0605A" />
@@ -73,6 +74,28 @@
                 <Setter Property="TextAlignment" Value="Center" />
                 <Setter Property="Margin" Value="24" />
                 <Setter Property="IsHitTestVisible" Value="False" />
+            </Style>
+
+            <!-- Notification-count badge overlaid on a tab icon (Updates/Diagnose/Übersicht): a small
+                 red dot with a number, the same idea as an app icon's notification badge on a phone.
+                 Pair with a TextBlock styled TabBadgeText inside, and drive Visibility from the count
+                 via the CountToVisibility converter above. -->
+            <Style x:Key="TabBadge" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                <Setter Property="CornerRadius" Value="7" />
+                <Setter Property="MinWidth" Value="14" />
+                <Setter Property="Height" Value="14" />
+                <Setter Property="Padding" Value="3,0" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Margin" Value="0,-5,-7,0" />
+            </Style>
+            <Style x:Key="TabBadgeText" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="FontSize" Value="9" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

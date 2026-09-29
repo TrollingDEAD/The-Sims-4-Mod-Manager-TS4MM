@@ -44,6 +44,14 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             ModsGrid.Focus();
         }, System.Windows.Threading.DispatcherPriority.Background);
 
+        // Must run synchronously, not via Dispatcher.BeginInvoke: the whole point is to close the
+        // edit transaction before the caller's own rescan can touch the Mods collection.
+        _viewModel.ModEditCommitNeeded += () =>
+        {
+            ModsGrid.CommitEdit(System.Windows.Controls.DataGridEditingUnit.Cell, true);
+            ModsGrid.CommitEdit(System.Windows.Controls.DataGridEditingUnit.Row, true);
+        };
+
         // Window backdrop/title bar follow the theme chosen in the view model (saved in the settings).
         Loaded += (_, _) => Services.ThemeService.Apply(_viewModel.IsDarkTheme, _viewModel.AccentColor);
 
@@ -99,6 +107,19 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         if (sender is System.Windows.Controls.ListView { SelectedItem: CurseForgeModViewModel vm })
             _viewModel.Updates.ShowModCommand.Execute(vm);
+    }
+
+    /// <summary>Loads the Browse tab's category list (and an initial listing) the first time it's
+    /// actually opened, instead of hitting the CurseForge API as soon as the app starts. Checked by
+    /// index (Browse is the second sub-tab), not by header text, since the header gets translated at
+    /// runtime for non-German locales. Uses e.Source, not sender: the ComboBox/ListBox inside the
+    /// Browse tab are Selectors too, and their own SelectionChanged bubbles up into this same
+    /// handler (sender is always the TabControl it's attached to either way) - e.Source is only the
+    /// TabControl itself when a sub-tab was actually switched.</summary>
+    private void CurseForgeSubTabs_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (e.Source is System.Windows.Controls.TabControl { SelectedIndex: 1 })
+            _ = _viewModel.Browse.EnsureCategoriesLoadedAsync();
     }
 
     private void ChooseFolder_Click(object sender, RoutedEventArgs e)

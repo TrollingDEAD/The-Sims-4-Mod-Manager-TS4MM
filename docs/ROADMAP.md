@@ -7,6 +7,30 @@ shipped; this file gets trimmed as that happens. Suggestions and votes are welco
 
 Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothing = not started.
 
+## Known issues
+
+- ✅ Disabling a mod had a large delay before the UI reflected it, and re-enabling a previously
+  disabled mod didn't work at all - confirmed fixed by actually driving the app (Windows UI
+  Automation + screenshots) against a real 2266-mod library, not just by reading the code - see
+  [CHANGELOG.md](../CHANGELOG.md).
+- ✅ Accent color picker presets were mismatched: picking a new color left some controls ("Play",
+  "Fix all safe ones", the tab badges) stuck on the previous accent color indefinitely. Confirmed
+  and fixed with actual pixel-level before/after comparison of a running instance, not a guess -
+  see [CHANGELOG.md](../CHANGELOG.md).
+- ✅ The "Export list..." button's icon (and two others: the mod-list "replaces game" indicator,
+  and the "Als Sammelordner" button) rendered as a blank/broken glyph - see
+  [CHANGELOG.md](../CHANGELOG.md).
+- 🔧 General UI consistency pass: audit borders, padding, and control sizing (dropdowns, buttons,
+  placement) across all screens and window sizes via a systematic screenshot review, to catch
+  design inconsistencies that have accumulated across features. (Every `SymbolIcon` usage was
+  already swept for the missing-glyph bug above - no further icons need checking there, just new
+  ones added later.) Covered so far by actually driving the app and screenshotting it: Overview
+  (✅ found and fixed the "Affected: N" dropdowns being inconsistently sized per card - see
+  [CHANGELOG.md](../CHANGELOG.md)), Mods (including the checkbox-column fixes above), Catalog,
+  Diagnose - otherwise looked visually consistent. Not yet covered: Library (Tray), Saves, Storage,
+  History, Game, Updates, the Conflicts/Solutions/Resources sub-tabs, and the Setup/Merge/Sort
+  dialog windows.
+
 ## Mod management
 
 - ✅ Favorite mods (star toggle + filter).
@@ -23,11 +47,28 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
   one document, for people who maintain a curated pack across machines.
 - Rename-safe move: relocate a mod between collection subfolders from inside the app instead of
   Explorer, updating notes/tags/profile references in one step.
-- Install directly from a CurseForge project URL/ID: paste a link, resolve it through the existing
-  `CurseForgeClient`, and install through the change journal - the counterpart to the fingerprint-based
-  update checker already in the "Updates" tab, for getting a mod in the first place rather than only
-  updating one already installed. Longer-term, this could grow into a full in-app mod browser: install
-  buttons, automatic dependency installs, and automatic mod-list sorting after each install.
+- ✅ Full in-app CurseForge mod browser (the "CurseForge" tab's new "Browse" sub-tab): search/browse
+  the Sims 4 catalog by keyword, category and sort order, install with one click, with required and
+  optional dependencies installed automatically and the result sorted into its category/creator
+  folder the same way a manual "Sortieren" pass would - install + dependencies + sort all undo as a
+  single History entry. Verified against the live API (not just the fingerprint-based update
+  checker's mocked tests): a real install pulled in 12 real dependencies, created the right
+  category/creator folders, and one Undo cleanly reversed all 38 affected files. See
+  [CHANGELOG.md](../CHANGELOG.md).
+- Status indicators in the mod list: small icons per row for update-available, broken, conflicting,
+  and other warnings, with mod names still aligned consistently across rows so the list stays
+  clean regardless of how many indicators a given mod has. The existing conflict-warning icon's
+  name-alignment bug (✅ fixed - see [CHANGELOG.md](../CHANGELOG.md)) is the pattern to reuse for
+  each new icon: reserve its slot with `Visibility="Hidden"`, not `Collapsed`, so the name column
+  never shifts depending on which icons a given row happens to show.
+- Automatic background CurseForge update check (e.g. once on startup, like the silent app-update
+  check already does): today `UpdatesViewModel.CheckAsync` only runs from the "Check now" button,
+  so the Updates tab's new notification badge only ever reflects the last manual check. Needs an
+  API-key precondition (skip silently without one) and rate-limit-friendly pacing since it's a
+  real network call, unlike the other two tabs' badges which piggyback on the existing rescan.
+- Deeper mod optimization tooling: go beyond the current diagnostics to automatically detect and
+  fix more problem classes, plus performance-focused operations for large mod lists - texture
+  scaling/downscaling, debloating unused resources, and script merging.
 
 ## Conflict resolution
 
@@ -89,6 +130,14 @@ Legend: ✅ shipped (kept here briefly for context) · 🔧 in progress · nothi
   handful of notifications so one missed while away from the keyboard isn't lost for good.
 - Minimize-to-tray and an optional "launch with Windows" setting, for people who leave the app
   running alongside the game rather than closing it after "Spielen".
+- ✅ Tab badge indicators: a small red-dot/count badge on the "Updates", "Diagnose" and
+  "Übersicht" tabs, the way a phone app icon badges its notification count - see
+  [CHANGELOG.md](../CHANGELOG.md). The Updates badge only reflects the last manual check
+  (`UpdatesViewModel.CheckAsync`, a "Check now" button) - there's no automatic background scan to
+  drive it yet, unlike the other two, which refresh with every mod rescan. Making the CurseForge
+  check itself run automatically (e.g. once on startup, like the silent app-update check) is a
+  separate, bigger piece of work: network calls, an API key precondition, and rate limits to
+  respect - not done here.
 
 ## Localization & accessibility
 

@@ -21,6 +21,16 @@ public sealed class InverseBoolToVisibilityConverter : IValueConverter
         throw new NotSupportedException();
 }
 
+/// <summary>Visible when an int is greater than zero (e.g. a tab's notification-count badge).</summary>
+public sealed class CountToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is int count && count > 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
 /// <summary>Width of a bar: fraction (0..1) times the available width.</summary>
 public sealed class FractionWidthConverter : IMultiValueConverter
 {

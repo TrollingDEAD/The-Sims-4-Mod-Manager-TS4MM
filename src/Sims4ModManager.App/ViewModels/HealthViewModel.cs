@@ -40,6 +40,9 @@ public partial class HealthViewModel : ObservableObject
     [ObservableProperty] private HealthSeverity? overallSeverity;
     [ObservableProperty] private int bulkFixCount;
 
+    /// <summary>Errors + warnings (excludes purely informational findings); drives the tab's badge.</summary>
+    [ObservableProperty] private int problemCount;
+
     // Game card
     [ObservableProperty] private string gameVersionLabel = "–";
     [ObservableProperty] private string patchLabel = string.Empty;
@@ -114,6 +117,7 @@ public partial class HealthViewModel : ObservableObject
         int warnings = all.Count(i => i.Severity == HealthSeverity.Warning);
         int infos = all.Count(i => i.Severity == HealthSeverity.Info);
         int fixable = all.Count(i => i.CanFix);
+        ProblemCount = errors + warnings;
         Summary = all.Count == 0
             ? L.T("Alles in Ordnung – keine Probleme gefunden.")
             : L.F("{0} Fehler, {1} Warnung(en), {2} Hinweis(e)", errors, warnings, infos) +

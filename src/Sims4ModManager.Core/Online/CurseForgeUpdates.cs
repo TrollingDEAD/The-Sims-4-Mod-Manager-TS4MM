@@ -157,25 +157,10 @@ public sealed class CurseForgeUpdateChecker
     {
         if (oldFiles.Count == 0)
             throw new InvalidOperationException("No installed files to replace.");
-        string staging = Path.Combine(Path.GetTempPath(), "Sims4ModManager", "update-" + Guid.NewGuid().ToString("N"));
+        string staging = StagingDir();
         try
         {
-            var newFiles = new List<(string Source, string Name)>();
-            if (TrayInstaller.IsArchive(downloadName))
-            {
-                var warnings = new List<string>();
-                if (!TrayInstaller.TryExtract(download, staging, downloadName, warnings))
-                    throw new IOException(warnings.FirstOrDefault() ?? L.F("{0} ließ sich nicht entpacken.", downloadName));
-                newFiles.AddRange(Directory.EnumerateFiles(staging, "*", SearchOption.AllDirectories)
-                    .Where(f => ModFileNaming.IsManagedModFile(Path.GetFileName(f)))
-                    .Select(f => (f, Path.GetFileName(f))));
-            }
-            else if (ModFileNaming.IsManagedModFile(downloadName))
-            {
-                newFiles.Add((download, downloadName));
-            }
-            if (newFiles.Count == 0)
-                throw new IOException(L.F("{0} enthält keine Mod-Dateien.", downloadName));
+            var newFiles = ExtractModFiles(download, downloadName, staging);
 
             string targetDir = Path.GetDirectoryName(oldFiles[0])!;
             bool disabled = oldFiles.All(f => ModFileNaming.IsDisabled(f));
@@ -193,10 +178,59 @@ public sealed class CurseForgeUpdateChecker
             }
             return installed;
         }
-        finally
+        finally { CleanupStaging(staging); }
+    }
+
+    /// <summary>
+    /// Installs a downloaded file (or archive of them) fresh into <paramref name="targetDir"/> - no old
+    /// files to replace, used by the CurseForge Browse tab's install/dependency pipeline. Returns the
+    /// installed file paths.
+    /// </summary>
+    public static IReadOnlyList<string> ApplyInstall(ChangeRecorder recorder, string targetDir, string download, string downloadName)
+    {
+        string staging = StagingDir();
+        try
         {
-            try { if (Directory.Exists(staging)) Directory.Delete(staging, recursive: true); }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* temp folder */ }
+            var newFiles = ExtractModFiles(download, downloadName, staging);
+            var installed = new List<string>();
+            foreach (var (source, name) in newFiles.DistinctBy(f => f.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                string target = Path.Combine(targetDir, name);
+                recorder.CopyIn(source, target);
+                installed.Add(target);
+            }
+            return installed;
         }
+        finally { CleanupStaging(staging); }
+    }
+
+    /// <summary>Extracts a downloaded file/archive into <paramref name="staging"/> and returns every managed mod file found.</summary>
+    private static List<(string Source, string Name)> ExtractModFiles(string download, string downloadName, string staging)
+    {
+        var newFiles = new List<(string Source, string Name)>();
+        if (TrayInstaller.IsArchive(downloadName))
+        {
+            var warnings = new List<string>();
+            if (!TrayInstaller.TryExtract(download, staging, downloadName, warnings))
+                throw new IOException(warnings.FirstOrDefault() ?? L.F("{0} ließ sich nicht entpacken.", downloadName));
+            newFiles.AddRange(Directory.EnumerateFiles(staging, "*", SearchOption.AllDirectories)
+                .Where(f => ModFileNaming.IsManagedModFile(Path.GetFileName(f)))
+                .Select(f => (f, Path.GetFileName(f))));
+        }
+        else if (ModFileNaming.IsManagedModFile(downloadName))
+        {
+            newFiles.Add((download, downloadName));
+        }
+        if (newFiles.Count == 0)
+            throw new IOException(L.F("{0} enthält keine Mod-Dateien.", downloadName));
+        return newFiles;
+    }
+
+    private static string StagingDir() => Path.Combine(Path.GetTempPath(), "Sims4ModManager", "update-" + Guid.NewGuid().ToString("N"));
+
+    private static void CleanupStaging(string staging)
+    {
+        try { if (Directory.Exists(staging)) Directory.Delete(staging, recursive: true); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* temp folder */ }
     }
 }

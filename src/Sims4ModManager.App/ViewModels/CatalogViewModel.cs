@@ -115,7 +115,10 @@ public partial class CatalogViewModel : ObservableObject
     /// Creators per file (file name + CAS part names) and per mod: a folder's own name ("[Creator] Set") wins,
     /// otherwise the creator of most of its files - a mixed folder ("Mods\CC") gets none instead of a wrong one.
     /// </summary>
-    private static (IReadOnlyDictionary<string, string> Mods, IReadOnlyDictionary<string, string> Files) GuessCreators(
+    /// <summary>Internal so the CurseForge Browse tab can guess creators for freshly-installed mods the
+    /// same way "Sortieren" would, instead of trusting CurseForge's own author field (which can differ
+    /// from the folder-name convention this heuristic follows).</summary>
+    internal static (IReadOnlyDictionary<string, string> Mods, IReadOnlyDictionary<string, string> Files) GuessCreators(
         IReadOnlyList<ModEntry> mods, IReadOnlyDictionary<ModFileInfo, PackageCatalogInfo> info)
     {
         var files = CreatorGuesser.Guess(mods.SelectMany(m => m.Files).Select(f => new CreatorGuesser.Input(
@@ -197,18 +200,7 @@ public partial class CatalogViewModel : ObservableObject
 
     public string? CreatorOf(ModFileInfo file) => _fileCreators.TryGetValue(file.AbsolutePath, out var creator) ? creator : null;
 
-    public (ContentCategory Category, CasCategory Cas) CategoryOf(ModEntry mod)
-    {
-        var files = mod.Files.Select(f => (File: f, Info: InfoOf(f))).Where(x => x.Info is not null).ToList();
-        if (files.Count == 0)
-            return (mod.ContainsScript ? ContentCategory.Script : ContentCategory.Other, CasCategory.None);
-        var category = ModClassifier.Classify(files.Select(x => (x.File, x.Info!.Category)));
-        var cas = category == ContentCategory.Cas
-            ? files.Where(x => x.Info!.Category == ContentCategory.Cas).GroupBy(x => x.Info!.CasCategory)
-                .OrderByDescending(g => g.Count()).First().Key
-            : CasCategory.None;
-        return (category, cas);
-    }
+    public (ContentCategory Category, CasCategory Cas) CategoryOf(ModEntry mod) => ModClassifier.ClassifyMod(mod, _info);
 
     public string CategoryLabelOf(ModEntry mod)
     {

@@ -15,7 +15,7 @@ public partial class ModEntryViewModel : ObservableObject
     private readonly Action<ModEntryViewModel, bool> _onToggleRequested;
     private bool _suppressToggleRequest;
 
-    public ModEntry Model { get; }
+    public ModEntry Model { get; private set; }
 
     [ObservableProperty]
     private bool isEnabled;
@@ -73,6 +73,23 @@ public partial class ModEntryViewModel : ObservableObject
             return;
 
         _onToggleRequested(this, value);
+    }
+
+    /// <summary>
+    /// Refreshes this row in place from a freshly rescanned <see cref="ModEntry"/> with the same Id,
+    /// instead of the caller replacing the row's <see cref="ModEntryViewModel"/> wholesale. Rescans
+    /// run after every single toggle (conflicts can shift for every other mod too), and rebuilding
+    /// the DataGrid's whole ItemsSource on every one of them resets the grid's per-cell interaction
+    /// state - the checkbox column then needs a "warm-up" click to reselect the row before a second
+    /// click actually toggles it, which is what made re-enabling a mod look broken.
+    /// </summary>
+    public void UpdateModel(ModEntry model)
+    {
+        Model = model;
+        _suppressToggleRequest = true;
+        IsEnabled = model.IsEnabled;
+        _suppressToggleRequest = false;
+        OnPropertyChanged((string?)null);
     }
 
     public void SetNote(ModNote? note)

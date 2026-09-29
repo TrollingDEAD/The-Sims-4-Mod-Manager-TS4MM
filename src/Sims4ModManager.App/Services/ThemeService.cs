@@ -19,10 +19,13 @@ public static class ThemeService
         var theme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
         if (TryParseColor(accentColor, out var color))
         {
-            // updateAccent: false - otherwise this call recomputes the accent from Windows and overwrites
-            // the custom color set right after it.
-            ApplicationThemeManager.Apply(theme, WindowBackdropType.Mica, updateAccent: false);
+            // Accent first, then theme (updateAccent: false so this second call doesn't recompute the
+            // accent from Windows and overwrite the custom color just set) - some control styles (e.g.
+            // the "Primary" Button appearance used by "Play") only pick up the accent color while their
+            // theme resources are being (re-)applied; setting the color afterwards left them on the
+            // previous accent until the next full app restart.
             ApplicationAccentColorManager.Apply(color, theme);
+            ApplicationThemeManager.Apply(theme, WindowBackdropType.Mica, updateAccent: false);
         }
         else
         {

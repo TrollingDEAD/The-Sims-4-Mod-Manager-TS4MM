@@ -37,7 +37,7 @@ up and reversible.
   - [History & backups](#history--backups)
   - [Downloads & safety](#downloads--safety)
   - [Storage & package tools](#storage--package-tools)
-  - [Mod updates (CurseForge)](#mod-updates-curseforge)
+  - [CurseForge: updates & browse](#curseforge-updates--browse)
   - [Search, UI & persistence](#search-ui--persistence)
 - [Project structure](#project-structure)
 - [Building from source](#building-from-source)
@@ -218,11 +218,19 @@ launches, obfuscated code) — including before install. Missing or disabled req
   one package; the list of original files is stored in Sims 4 Studio's format (`0x7FB6AD8A`), so
   either program can unmerge such packages.
 
-### Mod updates (CurseForge)
+### CurseForge: updates & browse
 
-Recognizes CurseForge mods by file fingerprint (MurmurHash2, same as CurseForge; cached in
-`cache\fingerprints.json`), shows newer releases, and installs them through History (undoable).
-Requires your own free API key (from console.curseforge.com), stored encrypted in settings via
+- **Updates**: recognizes CurseForge mods by file fingerprint (MurmurHash2, same as CurseForge;
+  cached in `cache\fingerprints.json`), shows newer releases, and installs them through History
+  (undoable).
+- **Browse**: search and browse the Sims 4 CurseForge catalog by keyword, category and sort order,
+  and install with one click. Required and optional dependencies are resolved and installed
+  automatically, and the result is sorted into its category/creator folder the same way a manual
+  sort would — the whole thing (mod + dependencies + sort) undoes as a single History entry. Mods
+  that only allow downloads on the CurseForge website are detected up front, before anything is
+  downloaded.
+
+Both need your own free API key (from console.curseforge.com), stored encrypted in settings via
 Windows DPAPI. *(This is separate from the app's own [self-update](#self-updating) mechanism.)*
 
 ### Search, UI & persistence
@@ -235,10 +243,12 @@ Windows DPAPI. *(This is separate from the app's own [self-update](#self-updatin
   source language; translations live in
   [`src/Sims4ModManager.Core/Localization/en.json`](src/Sims4ModManager.Core/Localization/en.json).
 - **UI**: Fluent design (WPF-UI) with a dark theme (toggle to light via the title-bar icon,
-  remembered), icons and tooltips throughout, search/filters in the mod list (e.g. "with
-  conflicts", "used in library"), a warning icon on conflicted mods, dimmed disabled mods.
-  Shortcuts: `F5` refresh, `Ctrl+F` search, `Enter` in the profile name saves it, double-click a
-  library entry to reveal it in Explorer.
+  remembered), an accent color picker (paint brush icon, eight presets or the Windows accent),
+  icons and tooltips throughout, search/filters in the mod list (e.g. "with conflicts", "used in
+  library"), a warning icon on conflicted mods, dimmed disabled mods, and a small notification
+  badge on the Updates/Diagnose/Übersicht tab icons when there's something to look at. Shortcuts:
+  `F5` refresh, `Ctrl+F` search, `Enter` in the profile name saves it, double-click a library entry
+  to reveal it in Explorer.
 - **Persistence**: settings (`%AppData%\Sims4ModManager\settings.json`: Mods folder, recent
   folders, last profile, window position) and profiles are written atomically; the previous
   version is kept as `.bak` and used automatically if a file gets corrupted.

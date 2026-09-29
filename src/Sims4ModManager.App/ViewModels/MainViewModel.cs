@@ -94,6 +94,16 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Asks the view to scroll the mod list to an entry.</summary>
     public event Action<ModEntryViewModel>? ModScrollRequested;
 
+    /// <summary>
+    /// Asks the view to commit any in-progress DataGrid cell edit right away. Raised before a mod
+    /// toggle touches the Mods collection: the checkbox click that triggered the toggle leaves the
+    /// grid's underlying CollectionView with an open edit transaction, and rebuilding/refreshing
+    /// that collection while the transaction is still open throws ("'Refresh' ist während einer
+    /// AddNew- oder EditItem-Transaktion nicht zulässig") - reliably reproducible by toggling a
+    /// second mod before the first one's rescan has applied.
+    /// </summary>
+    public event Action? ModEditCommitNeeded;
+
     // --- Mod list filtering -------------------------------------------------------------------
 
     public static readonly string FilterAll = L.T("Alle");
@@ -383,8 +393,11 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Tab "Spiel": game index, default replacements, recolors without mesh.</summary>
     public GameViewModel Game { get; }
 
-    /// <summary>Tab "Updates": CurseForge.</summary>
+    /// <summary>Tab "CurseForge" › "Updates": checks installed CurseForge mods for newer releases.</summary>
     public UpdatesViewModel Updates { get; }
+
+    /// <summary>Tab "CurseForge" › "Browse": search/install from the Sims 4 catalog.</summary>
+    public BrowseViewModel Browse { get; }
 
     /// <summary>App self-update (title bar): checks GitHub Releases, separate from the CurseForge mod updates above.</summary>
     public AppUpdateViewModel AppUpdate { get; }
@@ -493,6 +506,7 @@ public partial class MainViewModel : ObservableObject
         Search = new SearchViewModel(this);
         Game = new GameViewModel(this, dialogs);
         Updates = new UpdatesViewModel(this, dialogs);
+        Browse = new BrowseViewModel(this, dialogs);
         AppUpdate = new AppUpdateViewModel(this);
         StartDownloadWatcher();
         Tray = new TrayViewModel(this, dialogs);
@@ -747,21 +761,85 @@ public partial class MainViewModel : ObservableObject
         TakeDailySnapshot();
     }
 
+    /// <summary>
+    /// Async counterpart to RescanMods() (keeps the current selection, unlike the startup variant):
+    /// scans and detects conflicts on a background thread before rebuilding the Mods collection.
+    /// Used by <see cref="OnModToggleRequested"/> so a single checkbox click doesn't run the full,
+    /// synchronous scan+conflict-detection while the DataGridCheckBoxColumn that raised the click is
+    /// still mid-toggle: rebuilding (Mods.Clear()/Add) the bound collection from inside that same
+    /// input dispatch corrupted the grid's edit state, which is what made re-enabling a mod right
+    /// after disabling it appear to silently do nothing, on top of the scan blocking the UI thread
+    /// for large mod lists.
+    /// </summary>
+    private async Task RescanModsAsync()
+    {
+        string? selectedId = SelectedMod?.Id;
+        string? path = ModsPath;
+        if (path is null || !Directory.Exists(path))
+        {
+            RescanCore();
+        }
+        else
+        {
+            var (scanned, report) = await Task.Run(() =>
+            {
+                var mods = ModScanner.Scan(path);
+                return (mods, ConflictDetector.FindConflicts(mods));
+            });
+            ApplyScanResult(scanned, report, selectedId);
+        }
+
+        _ = Catalog.RefreshAsync();
+        _ = Tray.RefreshAsync();
+        _ = Health.RefreshAsync();
+        _ = Diagnose.RefreshAsync();
+        _ = Saves.RefreshAsync();
+        TakeDailySnapshot();
+    }
+
     private void ApplyScanResult(IReadOnlyList<ModEntry> scanned, ConflictReport report, string? selectedId)
     {
         _currentMods = scanned;
 
-        Mods.Clear();
-        foreach (var mod in _currentMods)
+        // Updates rows in place (matched by Id) instead of Mods.Clear() + re-adding everything: a
+        // Clear() is a collection Reset, which makes the DataGrid throw away and regenerate every row
+        // container - including the checkbox column's per-cell "current cell" state. Since a rescan
+        // runs after every single toggle, that reset every row's interaction state on every click,
+        // and the checkbox column then needed a spare "warm-up" click before the next one actually
+        // registered - see ModEntryViewModel.UpdateModel. Only mods that were actually added, removed
+        // or reordered touch the collection itself; everything else is just a property refresh.
+        var existingById = Mods.ToDictionary(m => m.Id);
+        var scannedIds = scanned.Select(m => m.Id).ToHashSet();
+        for (int i = Mods.Count - 1; i >= 0; i--)
         {
-            var vm = new ModEntryViewModel(mod, OnModToggleRequested);
+            if (!scannedIds.Contains(Mods[i].Id))
+                Mods.RemoveAt(i);
+        }
+
+        for (int i = 0; i < scanned.Count; i++)
+        {
+            var mod = scanned[i];
+            ModEntryViewModel vm;
+            if (existingById.TryGetValue(mod.Id, out var existing))
+            {
+                vm = existing;
+                vm.UpdateModel(mod);
+                int currentIndex = Mods.IndexOf(vm);
+                if (currentIndex != i)
+                    Mods.Move(currentIndex, i);
+            }
+            else
+            {
+                vm = new ModEntryViewModel(mod, OnModToggleRequested);
+                Mods.Insert(i, vm);
+            }
+
             vm.SetNote(_notes.Get(mod.Id));
             if (Catalog.HasData)
             {
                 vm.CategoryLabel = Catalog.CategoryLabelOf(mod);
                 vm.CreatorLabel = Catalog.CreatorOf(mod) ?? string.Empty;
             }
-            Mods.Add(vm);
         }
 
         ShowConflicts(report);
@@ -872,6 +950,8 @@ public partial class MainViewModel : ObservableObject
 
     private async void OnModToggleRequested(ModEntryViewModel vm, bool enable)
     {
+        ModEditCommitNeeded?.Invoke();
+
         // Disabling CC that a save uses makes Sims lose hair/clothes/furniture there - ask first.
         var savesUsing = enable ? Array.Empty<string>() : Saves.SavesUsing(vm.Model);
         if (savesUsing.Count > 0 && !await _dialogs.ConfirmAsync(L.T("Wird in Spielständen verwendet"),
@@ -887,7 +967,8 @@ public partial class MainViewModel : ObservableObject
         using (var recorder = Journal.Begin(enable ? L.F("„{0}“ aktiviert", vm.DisplayName) : L.F("„{0}“ deaktiviert", vm.DisplayName)))
             result = ModToggleService.SetEnabled(vm.Model, enable, recorder);
 
-        AfterChange();
+        await RescanModsAsync();
+        History.Refresh(selectNewest: true);
         if (!result.Success)
             StatusMessage = L.F("Fehler: {0}", string.Join("; ", result.Failures.Select(f => $"{Path.GetFileName(f.FilePath)}: {f.Message}")));
     }
