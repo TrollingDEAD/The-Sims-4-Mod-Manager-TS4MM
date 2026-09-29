@@ -2,7 +2,7 @@
 
   <!-- Single source of truth for the app version - bump this and add a matching CHANGELOG.md entry. -->
   <PropertyGroup>
-    <VersionPrefix>1.2.0</VersionPrefix>
+    <VersionPrefix>1.3.0</VersionPrefix>
     <Product>Sims 4 Mod Manager</Product>
   </PropertyGroup>
 
