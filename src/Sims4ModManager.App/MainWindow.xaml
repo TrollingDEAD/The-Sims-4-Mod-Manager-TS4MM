@@ -403,6 +403,9 @@
                                         <ui:ToggleSwitch Content="Download-Ordner überwachen" Margin="0,10,0,0"
                                                          IsChecked="{Binding DataContext.WatchDownloads, RelativeSource={RelativeSource AncestorType=Window}}"
                                                          ToolTip="Meldet neue Sims 4-Downloads (Mods, Tray-Dateien, Archive) im Windows-Download-Ordner und bietet an, sie zu installieren." />
+                                        <ui:ToggleSwitch Content="Downloads auch bei laufendem Spiel installieren" Margin="0,6,0,0"
+                                                         IsChecked="{Binding DataContext.AllowInstallWhileGameRunning, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                         ToolTip="Installieren fügt nur neue Dateien hinzu (eine gleichnamige vorhandene Datei wird nie überschrieben) – kann Sims 4 also nichts kaputtmachen, das gerade geladen ist. Der neue Mod erscheint im Spiel erst nach einem Neustart." />
                                     </StackPanel>
                                 </DockPanel>
                             </Border>

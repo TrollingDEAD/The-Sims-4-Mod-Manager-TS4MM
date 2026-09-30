@@ -148,12 +148,16 @@ so it stays a live list of open work, not an archive. Suggestions and votes are 
   Cats & Dogs object fixes) is the same shape: a deep, versioned, drift-prone tuning-resource edit
   with no independently verifiable spec available. Worth revisiting if real sample CC files ever
   become available to test bit offsets against.
-- [ ] Live-while-playing mode: PlumbBuddy can integrate newly added mods while the game keeps running,
-  where the existing "warn and block file changes while the game is running" safety net is more
-  conservative. Worth a narrow, explicitly-opt-in exception for operations that are safe mid-session
-  (adding a brand-new file, e.g. from a background CurseForge install) while keeping the existing
-  block for anything that touches a file the game may have already loaded (toggling, moving, or
-  resolving a conflict on an existing mod).
+- [x] Live-while-playing mode: a new "Downloads auch bei laufendem Spiel installieren" toggle
+  (Overview tab, off by default) skips the "Sims 4 läuft" confirmation specifically for installing
+  downloads (the "Install downloads …" button, drag-and-drop, "install downloaded folder", the issue-
+  driven "install archive" fix, and the pending-download banner - every entry point funnels through
+  the same `TrayViewModel.InstallAsync`). Scoped narrowly to installing because it's the one
+  operation that's safe by construction: `TrayInstaller.Execute` only ever adds brand-new files and
+  skips (never overwrites) a same-named existing file, so it cannot touch anything the game may
+  already have loaded - unlike toggling, moving, merging, or resolving a conflict on an existing mod,
+  which all keep the confirmation unconditionally. The status message notes that the new mod needs a
+  game restart to appear (see [CHANGELOG.md](../CHANGELOG.md)).
 
 ## Load order & collections
 

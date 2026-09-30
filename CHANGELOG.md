@@ -68,6 +68,14 @@ adheres to [Semantic Versioning](https://semver.org/).
   conflict the in-app resolver doesn't safely auto-fix. Mirrors the existing mod-list/notes export
   buttons. Closes the "export a conflict report" item from
   [docs/ROADMAP.md](docs/ROADMAP.md#conflict-resolution).
+- Live-while-playing installs: a new "Downloads auch bei laufendem Spiel installieren" toggle
+  (Overview tab, off by default) skips the "Sims 4 läuft" confirmation specifically for installing
+  downloads - "Install downloads …", drag-and-drop, "install downloaded folder", the issue-driven
+  "install archive" fix, and the pending-download banner all funnel through the same install path,
+  which only ever adds brand-new files and never overwrites an existing one, so it can't touch
+  anything the game may already have loaded. Every other mutating operation (toggling, moving,
+  merging, resolving conflicts) keeps the confirmation unconditionally. Closes the "live-while-
+  playing mode" item from [docs/ROADMAP.md](docs/ROADMAP.md#mod-management).
 - Texture downscaling: a new "Überdimensionierte Texturen" card on the Storage tab flags CAS/object
   DDS textures above 2048×2048 pixels, with a "Verkleinern …" button to downscale them in one
   journaled/undoable step - many CC creators ship 4K textures the game never resolves at typical

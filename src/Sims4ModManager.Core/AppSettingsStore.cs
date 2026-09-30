@@ -29,6 +29,14 @@ public sealed class AppSettings
     /// <summary>Watch the Windows Downloads folder for new Sims 4 downloads.</summary>
     public bool WatchDownloads { get; set; } = true;
 
+    /// <summary>
+    /// Skip the "Sims 4 is running" confirmation when installing downloads: install only ever adds
+    /// brand-new files (an existing file with the same name is always skipped, never overwritten), so
+    /// it cannot touch anything the game may already have loaded. Off by default since it's a change
+    /// to established safety behavior the user should opt into explicitly.
+    /// </summary>
+    public bool AllowInstallWhileGameRunning { get; set; }
+
     /// <summary>Options of the "Spielen" button.</summary>
     public bool ClearCacheBeforePlay { get; set; } = true;
     public bool BackupSavesBeforePlay { get; set; }

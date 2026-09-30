@@ -1320,6 +1320,16 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Opt-in: skip the "Sims 4 is running" confirmation for installing downloads specifically, since
+    /// that operation only ever adds brand-new files and never touches one the game may have loaded.
+    /// </summary>
+    public bool AllowInstallWhileGameRunning
+    {
+        get => _settingsStore.Load().AllowInstallWhileGameRunning;
+        set { _settingsStore.TryUpdate(s => s.AllowInstallWhileGameRunning = value); OnPropertyChanged(); }
+    }
+
     [RelayCommand]
     private async Task InstallPendingDownloadAsync()
     {

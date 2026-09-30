@@ -204,7 +204,13 @@ public partial class TrayViewModel : ObservableObject
             return;
         }
 
-        if (!await _main.EnsureGameClosedAsync())
+        // Installing only ever adds brand-new files - TrayInstaller.Execute skips (never overwrites) a
+        // same-named existing file unless overwriteConflicts is passed, which this call site never does -
+        // so it cannot touch anything the game may have already loaded. Safe to skip the running-game
+        // gate when the user has explicitly opted in, unlike every other mutating operation.
+        bool gameRunning = Core.Game.GameInfo.IsGameRunning();
+        bool skipGateForLiveInstall = gameRunning && _main.AllowInstallWhileGameRunning;
+        if (!skipGateForLiveInstall && !await _main.EnsureGameClosedAsync())
             return;
 
         IsBusy = true;
@@ -233,6 +239,7 @@ public partial class TrayViewModel : ObservableObject
             });
             _main.StatusMessage = L.F("{0} Datei(en) installiert, {1} übersprungen.", result.Installed, result.Skipped) +
                                   (result.Errors.Count > 0 ? L.F(" {0} Fehler: {1}", result.Errors.Count, string.Join("; ", result.Errors.Take(3))) : "") +
+                                  (skipGateForLiveInstall ? " " + L.T("Sims 4 läuft noch – der neue Mod erscheint erst nach einem Neustart des Spiels.") : "") +
                                   $" {MainViewModel.UndoHint}";
         }
         finally
