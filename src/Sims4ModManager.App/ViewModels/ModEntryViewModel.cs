@@ -34,6 +34,14 @@ public partial class ModEntryViewModel : ObservableObject
 
     public bool HasConflict => ConflictTooltip is not null;
 
+    /// <summary>At least one of the mod's files could not be read (corrupted, locked, not a real package/archive).</summary>
+    [ObservableProperty]
+    private bool isBroken;
+
+    /// <summary>A newer version is available on CurseForge (from the last "Updates" tab check).</summary>
+    [ObservableProperty]
+    private bool hasUpdateAvailable;
+
     /// <summary>From the catalog (filled in once it is built).</summary>
     [ObservableProperty] private string categoryLabel = string.Empty;
     [ObservableProperty] private string creatorLabel = string.Empty;
@@ -47,6 +55,17 @@ public partial class ModEntryViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isFavorite;
+
+    /// <summary>"Always enable together" group name; null if not grouped.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasGroup), nameof(GroupTooltip))]
+    private string? group;
+
+    public bool HasGroup => Group is not null;
+
+    public string GroupTooltip => Group is null
+        ? string.Empty
+        : L.F("Gruppe „{0}“ – wird gemeinsam mit anderen Mods dieser Gruppe ein-/ausgeschaltet.", Group);
 
     /// <summary>What of the game this mod replaces (tooltip of the icon in the list); null if nothing.</summary>
     [ObservableProperty]
@@ -96,6 +115,7 @@ public partial class ModEntryViewModel : ObservableObject
     {
         Tags = note?.Tags ?? (IReadOnlyList<string>)Array.Empty<string>();
         IsFavorite = note?.IsFavorite ?? false;
+        Group = note?.Group;
         if (note is null || (string.IsNullOrWhiteSpace(note.Note) && string.IsNullOrWhiteSpace(note.Reason)
             && note.Tags.Count == 0 && string.IsNullOrWhiteSpace(note.DownloadUrl)))
         {

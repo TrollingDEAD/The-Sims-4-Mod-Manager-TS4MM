@@ -30,7 +30,7 @@ public static class ResourceTypeCatalog
         [0xB61DE6B4] = new(L.T("Objekt-Tuning"), ConflictSeverity.High),
 
         // Catalog / definitions
-        [0x034AEECB] = new("CAS-Teil", ConflictSeverity.High),
+        [0x034AEECB] = new(L.T("CAS-Teil"), ConflictSeverity.High),
         [0x319E4F1D] = new(L.T("Objektkatalog"), ConflictSeverity.High),
         [0xC0DB5AE7] = new(L.T("Objektdefinition"), ConflictSeverity.High),
         [0x0354796A] = new(L.T("Hautton"), ConflictSeverity.High),
@@ -56,7 +56,7 @@ public static class ResourceTypeCatalog
         [0x8B18FF6E] = new(L.T("Slider-Bereich"), ConflictSeverity.Medium),
 
         // Cosmetic only
-        [0x3C1AF1F2] = new("CAS-Vorschaubild", ConflictSeverity.Low),
+        [0x3C1AF1F2] = new(L.T("CAS-Vorschaubild"), ConflictSeverity.Low),
         [0x3C2A8647] = new(L.T("Kaufmodus-Vorschaubild"), ConflictSeverity.Low),
         [0x5B282D45] = new(L.T("Vorschaubild"), ConflictSeverity.Low),
         [0x0166038C] = new(L.T("Name Map"), ConflictSeverity.Low),

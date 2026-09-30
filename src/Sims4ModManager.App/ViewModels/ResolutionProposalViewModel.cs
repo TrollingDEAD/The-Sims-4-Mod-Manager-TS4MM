@@ -23,7 +23,7 @@ public sealed class ResolutionProposalViewModel
     /// <summary>Rewrites a package (as opposed to only renaming a file).</summary>
     public bool EditsPackage => Model.Action == ResolutionAction.RemoveResources;
 
-    public string BadgeLabel => IsSafe ? "sicher" : IsRecommended ? "empfohlen" : L.T("Alternative");
+    public string BadgeLabel => IsSafe ? L.T("sicher") : IsRecommended ? L.T("empfohlen") : L.T("Alternative");
 
     public string ActionTooltip => EditsPackage
         ? L.T("Schreibt das Package ohne die umstrittenen Ressourcen neu. Die Originaldatei wird vorher gesichert (Verlauf).")

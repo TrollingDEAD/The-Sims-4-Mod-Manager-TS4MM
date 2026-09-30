@@ -41,7 +41,7 @@ public static class ModSorter
 {
     public const string ScriptFolder = "Skript-Mods";
 
-    private const string MarkerText =
+    internal const string MarkerText =
         "Sammelordner des Sims 4 Mod Managers: jede Datei und jeder Unterordner hier ist ein eigener Mod.\r\n" +
         "Wird diese Datei gelöscht, gilt der Ordner wieder als ein einziger Mod. Das Spiel ignoriert sie.\r\n";
 
@@ -148,7 +148,7 @@ public static class ModSorter
     }
 
     /// <summary>Creates each level of <paramref name="relativeFolder"/> as a collection (folder + marker).</summary>
-    private static void EnsureCollection(string modsPath, string relativeFolder, string markerSource, ChangeRecorder recorder)
+    internal static void EnsureCollection(string modsPath, string relativeFolder, string markerSource, ChangeRecorder recorder)
     {
         string current = modsPath;
         foreach (string part in relativeFolder.Split(Path.DirectorySeparatorChar))
@@ -162,7 +162,7 @@ public static class ModSorter
     }
 
     /// <summary>Removes the (now empty) folders of a moved folder mod, deepest first; leftovers like readmes stay.</summary>
-    private static void RemoveEmptyFolders(string root, ChangeRecorder recorder)
+    internal static void RemoveEmptyFolders(string root, ChangeRecorder recorder)
     {
         if (!Directory.Exists(root))
             return;

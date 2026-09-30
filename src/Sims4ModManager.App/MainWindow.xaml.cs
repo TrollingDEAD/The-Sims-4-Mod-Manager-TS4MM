@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
@@ -83,6 +84,46 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             _viewModel.Search.OpenCommand.Execute(result);
             SearchResults.SelectedItem = null;
         }
+    }
+
+    /// <summary>
+    /// Feeds the grid's multi-selection into the view model for bulk tagging - WPF's DataGrid has no
+    /// two-way SelectedItems binding, so this is the one place that has to bridge it by hand.
+    /// </summary>
+    private void ModsGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) =>
+        _viewModel.SetSelectedMods(ModsGrid.SelectedItems.Cast<ModEntryViewModel>());
+
+    // --- Drag-and-drop install: drop a downloaded archive/mod/folder anywhere on the window and have -----
+    // it go through the same install pipeline (safety scan included) as a watched Downloads file. ----------
+
+    private static bool HasDroppableFiles(DragEventArgs e) =>
+        e.Data.GetDataPresent(DataFormats.FileDrop) &&
+        ((string[])e.Data.GetData(DataFormats.FileDrop)!).Any(IsDroppableInstallSource);
+
+    private static bool IsDroppableInstallSource(string path) =>
+        Directory.Exists(path) || Sims4ModManager.Core.Tray.TrayInstaller.IsArchive(path) ||
+        Sims4ModManager.Core.ModFileNaming.IsManagedModFile(Path.GetFileName(path)) ||
+        Sims4ModManager.Core.Tray.TrayFileName.HasTrayExtension(path);
+
+    private void MainWindow_DragEnter(object sender, DragEventArgs e)
+    {
+        bool droppable = HasDroppableFiles(e);
+        e.Effects = droppable ? DragDropEffects.Copy : DragDropEffects.None;
+        DropOverlay.Visibility = droppable ? Visibility.Visible : Visibility.Collapsed;
+        e.Handled = true;
+    }
+
+    private void MainWindow_DragLeave(object sender, DragEventArgs e) => DropOverlay.Visibility = Visibility.Collapsed;
+
+    private async void MainWindow_Drop(object sender, DragEventArgs e)
+    {
+        DropOverlay.Visibility = Visibility.Collapsed;
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+            return;
+
+        var sources = ((string[])e.Data.GetData(DataFormats.FileDrop)!).Where(IsDroppableInstallSource).ToList();
+        if (sources.Count > 0)
+            await _viewModel.Tray.InstallAsync(sources);
     }
 
     private void LargestList_MouseDoubleClick(object sender, MouseButtonEventArgs e)

@@ -431,6 +431,38 @@ public partial class HealthViewModel : ObservableObject
         Clipboard.SetText(ModListExporter.Render(_main.CurrentMods, ModListFormat.Text, _report?.GameVersion));
         _main.StatusMessage = L.T("Mod-Liste in die Zwischenablage kopiert – z. B. zum Einfügen in Discord oder ein Forum.");
     }
+
+    /// <summary>
+    /// Exports every mod's own notes, tags, "why installed" reason and group - not just the file
+    /// list ExportModList gives - for people who maintain a curated pack across machines and want
+    /// their own documentation of it to travel along.
+    /// </summary>
+    [RelayCommand]
+    private void ExportNotesReport()
+    {
+        var annotated = _main.CurrentMods.Where(m => _main.Notes.Get(m.Id) is { IsEmpty: false }).ToList();
+        if (annotated.Count == 0)
+        {
+            _main.StatusMessage = L.T("Noch keine Mods mit eigenen Notizen, Tags, Gründen oder Gruppen.");
+            return;
+        }
+
+        string? path = _dialogs.PickSaveFile(L.T("Notizen exportieren"), "Textdatei|*.txt|CSV-Tabelle (Excel)|*.csv",
+            L.F("Sims4-Notizen {0:yyyy-MM-dd}.txt", DateTime.Now));
+        if (path is null)
+            return;
+
+        var format = path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) ? ModListFormat.Csv : ModListFormat.Text;
+        try
+        {
+            ModNotesReportExporter.Write(_main.CurrentMods, _main.Notes.AllNotes, path, format);
+            _main.StatusMessage = L.F("Notizen exportiert: {0}", path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _main.StatusMessage = L.F("Export fehlgeschlagen: {0}", ex.Message);
+        }
+    }
 }
 
 public sealed class HealthIssueViewModel

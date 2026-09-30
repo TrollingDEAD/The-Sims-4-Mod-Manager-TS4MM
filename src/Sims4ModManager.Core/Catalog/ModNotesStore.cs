@@ -15,8 +15,15 @@ public sealed class ModNote
 
     public bool IsFavorite { get; set; }
 
+    /// <summary>
+    /// "Always enable together" group name. Every mod sharing the same (case-insensitive) group
+    /// name toggles along with the others whenever one of them is enabled or disabled.
+    /// </summary>
+    public string? Group { get; set; }
+
     public bool IsEmpty => string.IsNullOrWhiteSpace(Note) && Tags.Count == 0 && string.IsNullOrWhiteSpace(DownloadUrl)
-                           && string.IsNullOrWhiteSpace(CreatorUrl) && string.IsNullOrWhiteSpace(Reason) && !IsFavorite;
+                           && string.IsNullOrWhiteSpace(CreatorUrl) && string.IsNullOrWhiteSpace(Reason) && !IsFavorite
+                           && string.IsNullOrWhiteSpace(Group);
 }
 
 /// <summary>
@@ -54,12 +61,20 @@ public sealed class ModNotesStore
     public void Set(string modId, ModNote note)
     {
         note.Tags = note.Tags.Select(t => t.Trim()).Where(t => t.Length > 0).Distinct(StringComparer.CurrentCultureIgnoreCase).ToList();
+        note.Group = string.IsNullOrWhiteSpace(note.Group) ? null : note.Group.Trim();
         if (note.IsEmpty)
             Notes.Remove(modId);
         else
             Notes[modId] = note;
         JsonFile.WriteAtomic(_path, new NotesFile { Notes = Notes });
     }
+
+    /// <summary>
+    /// Every mod id (from <paramref name="candidateIds"/>) whose note has the same "always enable
+    /// together" group as <paramref name="group"/> - the mods that should toggle alongside it.
+    /// </summary>
+    public IReadOnlyList<string> ModIdsInGroup(string group, IEnumerable<string> candidateIds) =>
+        candidateIds.Where(id => string.Equals(Get(id)?.Group, group, StringComparison.CurrentCultureIgnoreCase)).ToList();
 
     /// <summary>Flips the favorite flag for a mod, preserving its other note fields, and returns the new state.</summary>
     public bool ToggleFavorite(string modId)

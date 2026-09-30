@@ -5,6 +5,100 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Notification history: a bell icon in the title bar (next to the keyboard-shortcuts button) opens a
+  popup listing the last 30 toast notifications with their timestamp, so one that auto-dismissed while
+  you were away isn't lost for good. A red dot badges the icon when a notification has arrived since
+  the popup was last opened. Closes the "toast history" item from
+  [docs/ROADMAP.md](docs/ROADMAP.md#app-level-features).
+- Bulk tagging: the Mods tab's mod grid now supports multi-select (Ctrl/Shift-click), and selecting
+  more than one row shows a small bar above the grid to add or remove one tag across the whole
+  selection in one step, instead of opening each mod's Details panel individually. Closes the "bulk
+  tagging" item from [docs/ROADMAP.md](docs/ROADMAP.md#mod-management).
+- Drag-and-drop install: dropping a downloaded archive (`.zip`/`.rar`/`.7z`), a loose `.package`/
+  `.ts4script`/tray file, or a folder anywhere onto the window now runs it through the same install
+  pipeline (safety scan, overview/confirm dialog) as a watched Downloads file or "Install downloads
+  …", instead of requiring the file picker. A drop overlay shows while dragging a recognized file
+  over the window and is silently inert for anything else (photos, documents, ...). Closes the
+  "drag-and-drop install" item from [docs/ROADMAP.md](docs/ROADMAP.md#mod-management).
+- "Always enable together" mod grouping: a mod's Details panel has a new "Group" field (next to
+  Tags), and the multi-select bulk bar can set or clear a group across the current selection.
+  Enabling or disabling any mod that's part of a group now cascades to every other mod sharing that
+  group name, as one journaled/undoable action - e.g. a hair mod and its matching accessory always
+  toggle together without hunting them down individually. The "used in a save" safety prompt before
+  disabling covers every mod the cascade would actually disable, not just the one directly clicked.
+  A small link-icon badge in the mod list marks which mods currently belong to a group. Closes the
+  "always enable together" item from [docs/ROADMAP.md](docs/ROADMAP.md#mod-management).
+- Bulk "why is this here" report: a new "Export notes …" button next to "Export list …" (Overview
+  tab, "Mods" card) writes every mod's own note, tags, "why installed" reason, group and links to a
+  text or CSV document - not just the file list the existing mod-list export gives - for people who
+  maintain a curated pack across machines and want their own documentation to travel with it. Mods
+  with nothing recorded are skipped; an empty result says so instead of writing an empty file.
+  Closes the "bulk 'why is this here' report" item from
+  [docs/ROADMAP.md](docs/ROADMAP.md#mod-management).
+- Rename-safe move: a new "Move …" button on the Mods tab's Details panel relocates a mod between
+  collection subfolders (or straight to the Mods root) from inside the app instead of dragging files
+  in Explorer - pick an existing collection or type a new one. A mod's ID is already just its file/
+  folder name, not its path, so notes, tags and profile membership keep pointing at the same mod
+  automatically; nothing needs updating. Refuses a move that would bury a mod deeper than the game
+  actually reads (scripts: 1 folder, packages: 5) or collide with an existing file/folder of the
+  same name, and the move is journaled like every other change, so it shows up in History and can be
+  undone. Closes the "rename-safe move" item from
+  [docs/ROADMAP.md](docs/ROADMAP.md#mod-management).
+- Status indicators in the mod list: two new per-row icons next to the existing conflict warning -
+  a "broken" icon for a mod with a file that failed to parse (corrupted, locked, or not a real
+  Sims 4 package/archive) and an "update available" icon sourced from the Updates tab's last
+  CurseForge check. Both reuse the reserved-slot (`Visibility="Hidden"`, not `Collapsed`) pattern
+  the conflict icon already used, so mod names stay aligned to the same column regardless of how
+  many indicators a given row shows. Closes the "status indicators in the mod list" item from
+  [docs/ROADMAP.md](docs/ROADMAP.md#mod-management).
+- Automatic background CurseForge update check: the Updates tab's fingerprint check now also runs
+  once per app startup, the same way the silent app-update check already does - skipped silently
+  without a CurseForge API key, and paced to at most once every 12 hours so it doesn't hammer the
+  API on every launch. It waits for the startup mod scan to finish first, and shows a toast
+  ("N mod update(s) available on CurseForge.") when it finds any, instead of only ever reflecting
+  whatever the last manual "Check now" click happened to see. Closes the "automatic background
+  CurseForge update check" item from [docs/ROADMAP.md](docs/ROADMAP.md#mod-management).
+
+### Fixed
+
+- Mods tab: when no mod was selected, the Details panel's "Select a mod..." placeholder text
+  overlapped illegibly with the (still-visible, disabled) "Show in Explorer"/"Make collection"
+  buttons and empty Notes fields underneath it, since only the placeholder text's own visibility
+  was toggled, not the details content around it. Found while driving the Library (Tray) screen
+  for the ongoing UI-consistency pass below. The details `ScrollViewer` now collapses itself
+  whenever no mod is selected, leaving only the placeholder text visible.
+- Conflicts sub-tab: the "safe"/"recommended" solution badges and the "CAS part"/"CAS thumbnail"
+  resource-type labels showed their raw German source strings ("sicher", "empfohlen", "CAS-Teil",
+  "CAS-Vorschaubild") in the English build - copy-paste omissions where these four literals weren't
+  wrapped in `L.T(...)` like every neighboring entry in the same dictionaries. Found while
+  screenshotting the Conflicts/Solutions/Resources sub-tabs for the same pass. Fixed in
+  [ResolutionProposalViewModel.cs](src/Sims4ModManager.App/ViewModels/ResolutionProposalViewModel.cs)
+  and [ResourceTypeCatalog.cs](src/Sims4ModManager.Core/ResourceTypeCatalog.cs), with matching
+  translations added to [en.json](src/Sims4ModManager.Core/Localization/en.json).
+
+### Changed
+
+- Reworked [docs/ROADMAP.md](docs/ROADMAP.md): substantially expanded with new areas (community
+  mod-tracking integration via TS4 Mod Hound, load order & shareable collections, game-performance/
+  optimization tooling distinct from the app's own performance, workflow automation, fun/
+  personalization tools, platform & distribution), grounded in research into the wider Sims 4
+  modding ecosystem - GameTimeDev's S4MM, PlumbBuddy, the official CurseForge manager, Sims 4
+  Ultimate Mod Manager, Sims 4 Studio, TS4 Mod Hound, and the March 2026 ModTheSims malware
+  incident. Every already-shipped (✅) entry was removed now that it's recorded here instead, and
+  the remaining sections were reordered so related areas (mod management → load order → conflict
+  resolution; then community data & safety; then app/game performance; then workflow and UX) read
+  as a more coherent sequence rather than accumulated in research order.
+- Converted [docs/ROADMAP.md](docs/ROADMAP.md) into an actual checkable task list (GitHub-flavored
+  Markdown `- [ ]` boxes) instead of plain bullets, so it can be worked and ticked off directly
+  rather than only read as prose. The in-progress UI-consistency item was broken out into a nested
+  per-screen checklist (four screens already checked off with their CHANGELOG reference, the rest
+  still open) instead of one paragraph of prose. `README.md` and `docs/README.md` now describe it
+  as a checkable development TODO rather than a plain idea list.
+
 ## [1.3.0] - 2026-09-29
 
 ### Added

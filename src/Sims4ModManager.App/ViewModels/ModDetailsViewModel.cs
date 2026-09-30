@@ -32,6 +32,7 @@ public sealed partial class ModDetailsViewModel : ObservableObject
         DownloadUrl = note.DownloadUrl ?? string.Empty;
         CreatorUrl = note.CreatorUrl ?? string.Empty;
         Reason = note.Reason ?? string.Empty;
+        Group = note.Group ?? string.Empty;
         _loading = false;
         selectedPackage = PackageFiles.FirstOrDefault();
 
@@ -73,6 +74,30 @@ public sealed partial class ModDetailsViewModel : ObservableObject
         .ToList();
 
     public bool CanMakeCollection => Mod.Model.IsFolder && !Mod.Model.ContainsScript;
+
+    // --- Move between collection folders (rename-safe: the mod's ID is its file/folder name, not its ---
+    // path, so notes/tags/profile membership need nothing updated - see MainViewModel.MoveModToCollectionAsync) --
+
+    public bool IsInCollection => Mod.Model.Collection.Length > 0;
+
+    /// <summary>Every other collection folder currently in use, for the "move to" popup's quick list.</summary>
+    public IReadOnlyList<string> KnownCollections =>
+        _main.KnownCollections.Where(c => !string.Equals(c, Mod.Model.Collection, StringComparison.CurrentCultureIgnoreCase)).ToList();
+
+    [ObservableProperty] private bool isMoveMenuOpen;
+    [ObservableProperty] private string moveTargetText = string.Empty;
+
+    [RelayCommand]
+    private void ToggleMoveMenu() => IsMoveMenuOpen = !IsMoveMenuOpen;
+
+    [RelayCommand]
+    private async Task MoveToCollectionAsync(string? target)
+    {
+        IsMoveMenuOpen = false;
+        await _main.MoveModToCollectionAsync(Mod.Model, target ?? MoveTargetText);
+        MoveTargetText = string.Empty;
+        _main.ModDetails = new ModDetailsViewModel(_main, _notes, Mod);
+    }
 
     /// <summary>What of the game this mod replaces (from the game index), empty if nothing.</summary>
     public string GameLabel => string.Join(Environment.NewLine, _main.Game.ReplacementsOf(Mod.Model)
@@ -139,6 +164,7 @@ public sealed partial class ModDetailsViewModel : ObservableObject
     [ObservableProperty] private string downloadUrl = string.Empty;
     [ObservableProperty] private string creatorUrl = string.Empty;
     [ObservableProperty] private string reason = string.Empty;
+    [ObservableProperty] private string group = string.Empty;
     [ObservableProperty] private bool isDirty;
 
     partial void OnNoteChanged(string value) => MarkDirty();
@@ -146,6 +172,7 @@ public sealed partial class ModDetailsViewModel : ObservableObject
     partial void OnDownloadUrlChanged(string value) => MarkDirty();
     partial void OnCreatorUrlChanged(string value) => MarkDirty();
     partial void OnReasonChanged(string value) => MarkDirty();
+    partial void OnGroupChanged(string value) => MarkDirty();
 
     private void MarkDirty()
     {
@@ -164,7 +191,8 @@ public sealed partial class ModDetailsViewModel : ObservableObject
             Tags = Tags.Split(',', ';').Select(t => t.Trim()).ToList(),
             DownloadUrl = DownloadUrl.Trim(),
             CreatorUrl = CreatorUrl.Trim(),
-            Reason = Reason.Trim()
+            Reason = Reason.Trim(),
+            Group = Group.Trim()
         };
         try
         {

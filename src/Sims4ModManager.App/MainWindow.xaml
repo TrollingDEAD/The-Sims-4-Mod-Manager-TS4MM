@@ -11,7 +11,8 @@
                  WindowBackdropType="Mica"
                  WindowCornerPreference="Round"
                  ToolTipService.InitialShowDelay="350"
-                 ToolTipService.ShowDuration="20000">
+                 ToolTipService.ShowDuration="20000"
+                 AllowDrop="True" DragEnter="MainWindow_DragEnter" DragLeave="MainWindow_DragLeave" DragOver="MainWindow_DragEnter" Drop="MainWindow_Drop">
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RescanCommand}" />
         <KeyBinding Key="Z" Modifiers="Control" Command="{Binding History.UndoLatestCommand}" />
@@ -118,6 +119,42 @@
                                            HorizontalAlignment="Stretch"
                                            Command="{Binding ImportBackupCommand}"
                                            ToolTip="Eine zuvor exportierte Sicherung übernehmen (startet die App neu)." />
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                </Grid>
+                <Grid Margin="0,0,2,0">
+                    <ui:Button x:Name="ToastHistoryButton" Appearance="Transparent" BorderThickness="0" Padding="8,4"
+                               Command="{Binding ToggleToastHistoryCommand}" ToolTip="Benachrichtigungen">
+                        <Grid>
+                            <ui:SymbolIcon Symbol="AlertOn24" />
+                            <Ellipse Width="8" Height="8" Fill="{StaticResource DangerBrush}"
+                                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-1,-1,0"
+                                      Visibility="{Binding HasUnseenToasts, Converter={StaticResource BoolToVisibility}}" />
+                        </Grid>
+                    </ui:Button>
+                    <Popup IsOpen="{Binding IsToastHistoryOpen}" PlacementTarget="{Binding ElementName=ToastHistoryButton}"
+                           Placement="Bottom" StaysOpen="False" AllowsTransparency="True" Width="320">
+                        <Border Margin="0,4,0,0" Padding="8" CornerRadius="8" BorderThickness="1"
+                                Background="{DynamicResource ApplicationBackgroundBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                            <StackPanel>
+                                <TextBlock Text="Benachrichtigungen" FontWeight="SemiBold" Margin="4,0,4,6" />
+                                <TextBlock Text="Keine Benachrichtigungen" Margin="4,0,4,4" Opacity="0.7"
+                                           Visibility="{Binding ToastHistory.Count, Converter={StaticResource InverseCountToVisibility}}" />
+                                <ItemsControl ItemsSource="{Binding ToastHistory}" MaxHeight="360">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,4" Padding="8,6" CornerRadius="6"
+                                                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                                                <DockPanel>
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding TimeLabel}" Opacity="0.6"
+                                                               FontSize="11" Margin="8,0,0,0" VerticalAlignment="Top" />
+                                                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
                         </Border>
                     </Popup>
@@ -357,6 +394,9 @@
                                                    ToolTip="Mod-Liste als Text (für Discord und Foren) oder CSV (für Excel) speichern." />
                                         <ui:Button Icon="{ui:SymbolIcon Copy24}" Margin="0,0,6,4" Command="{Binding CopyModListCommand}"
                                                    ToolTip="Mod-Liste in die Zwischenablage kopieren – z. B. für eine Support-Anfrage." />
+                                        <ui:Button Content="Notizen exportieren …" Icon="{ui:SymbolIcon DocumentBulletList24}" Margin="0,0,6,4"
+                                                   Command="{Binding ExportNotesReportCommand}"
+                                                   ToolTip="Eigene Notizen, Tags, Gründe und Gruppen aller Mods in ein Dokument exportieren – z. B. um ein kuratiertes Paket auf einem anderen PC nachzuvollziehen." />
                                     </WrapPanel>
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource CaptionText}" Text="{Binding ModsLabel}" />
@@ -580,10 +620,57 @@
                             </Grid.ColumnDefinitions>
 
                             <Grid Grid.Column="0">
-                                <DataGrid x:Name="ModsGrid"
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Bulk tagging: appears once more than one row is selected (Ctrl/Shift-click or Ctrl+A). -->
+                                <Border Grid.Row="0" Margin="0,0,0,6" Padding="10,7" CornerRadius="8" BorderThickness="1"
+                                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                        BorderBrush="{DynamicResource AccentFillColorDefaultBrush}"
+                                        Visibility="{Binding HasMultiSelection, Converter={StaticResource BoolToVisibility}}">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,10,0"
+                                                       Text="{Binding BulkSelectionLabel}" />
+                                            <ui:Button DockPanel.Dock="Right" Content="Entfernen" Icon="{ui:SymbolIcon TagDismiss24}" Margin="6,0,0,0"
+                                                       Command="{Binding RemoveBulkTagCommand}"
+                                                       ToolTip="Diesen Tag von allen ausgewählten Mods entfernen" />
+                                            <ui:Button DockPanel.Dock="Right" Content="Hinzufügen" Icon="{ui:SymbolIcon TagAdd24}"
+                                                       Command="{Binding ApplyBulkTagCommand}"
+                                                       ToolTip="Diesen Tag zu allen ausgewählten Mods hinzufügen" />
+                                            <ui:TextBox Margin="0,0,6,0" PlaceholderText="Tag …" Icon="{ui:SymbolIcon TagMultiple24}"
+                                                        Text="{Binding BulkTagText, UpdateSourceTrigger=PropertyChanged}">
+                                                <ui:TextBox.InputBindings>
+                                                    <KeyBinding Key="Enter" Command="{Binding ApplyBulkTagCommand}" />
+                                                </ui:TextBox.InputBindings>
+                                            </ui:TextBox>
+                                        </DockPanel>
+                                        <DockPanel Margin="0,6,0,0">
+                                            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,10,0"
+                                                       Text="Gruppe (immer gemeinsam ein-/ausschalten):" />
+                                            <ui:Button DockPanel.Dock="Right" Content="Aus Gruppe entfernen" Icon="{ui:SymbolIcon LinkDismiss24}" Margin="6,0,0,0"
+                                                       Command="{Binding ClearBulkGroupCommand}"
+                                                       ToolTip="Ausgewählte Mods aus ihrer Gruppe entfernen" />
+                                            <ui:Button DockPanel.Dock="Right" Content="Festlegen" Icon="{ui:SymbolIcon LinkAdd24}"
+                                                       Command="{Binding SetBulkGroupCommand}"
+                                                       ToolTip="Ausgewählte Mods in dieselbe Gruppe stellen – sie werden dann immer gemeinsam ein- und ausgeschaltet" />
+                                            <ui:TextBox Margin="0,0,6,0" PlaceholderText="Gruppenname …" Icon="{ui:SymbolIcon LinkMultiple24}"
+                                                        Text="{Binding BulkGroupText, UpdateSourceTrigger=PropertyChanged}">
+                                                <ui:TextBox.InputBindings>
+                                                    <KeyBinding Key="Enter" Command="{Binding SetBulkGroupCommand}" />
+                                                </ui:TextBox.InputBindings>
+                                            </ui:TextBox>
+                                        </DockPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <DataGrid x:Name="ModsGrid" Grid.Row="1"
                                           ItemsSource="{Binding ModsView}" SelectedItem="{Binding SelectedMod}"
+                                          SelectionChanged="ModsGrid_SelectionChanged"
                                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
-                                          IsReadOnly="False" SelectionMode="Single" HeadersVisibility="Column"
+                                          IsReadOnly="False" SelectionMode="Extended" SelectionUnit="FullRow" HeadersVisibility="Column"
                                           GridLinesVisibility="None" RowHeight="30">
                                     <DataGrid.RowStyle>
                                         <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
@@ -656,6 +743,20 @@
                                                              reserved either way, so names always start at the same X. Apply the same
                                                              Hidden-not-Collapsed pattern to any further per-mod status icons added here later
                                                              (update available, broken, ...), each in its own fixed-size slot. -->
+                                                        <ui:SymbolIcon DockPanel.Dock="Left" Symbol="ErrorCircle16" Margin="0,0,6,0"
+                                                                       Foreground="{StaticResource DangerBrush}"
+                                                                       ToolTip="Mindestens eine Datei dieses Mods lässt sich nicht lesen (beschädigt, gesperrt oder kein gültiges Sims 4-Package/-Archiv).">
+                                                            <ui:SymbolIcon.Style>
+                                                                <Style TargetType="ui:SymbolIcon">
+                                                                    <Setter Property="Visibility" Value="Hidden" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsBroken}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </ui:SymbolIcon.Style>
+                                                        </ui:SymbolIcon>
                                                         <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Warning16" Margin="0,0,6,0"
                                                                        Foreground="{StaticResource WarningBrush}" ToolTip="{Binding ConflictTooltip}">
                                                             <ui:SymbolIcon.Style>
@@ -663,6 +764,20 @@
                                                                     <Setter Property="Visibility" Value="Hidden" />
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding HasConflict}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </ui:SymbolIcon.Style>
+                                                        </ui:SymbolIcon>
+                                                        <ui:SymbolIcon DockPanel.Dock="Left" Symbol="ArrowCircleDown16" Margin="0,0,6,0"
+                                                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                                       ToolTip="Neuere Version auf CurseForge verfügbar – Details im Tab „Updates“.">
+                                                            <ui:SymbolIcon.Style>
+                                                                <Style TargetType="ui:SymbolIcon">
+                                                                    <Setter Property="Visibility" Value="Hidden" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
                                                                             <Setter Property="Visibility" Value="Visible" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
@@ -688,6 +803,9 @@
                                                         <ui:SymbolIcon DockPanel.Dock="Right" Symbol="Note16" Margin="6,0,0,0"
                                                                        Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" ToolTip="{Binding NoteTooltip}"
                                                                        Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
+                                                        <ui:SymbolIcon DockPanel.Dock="Right" Symbol="LinkMultiple16" Margin="6,0,0,0"
+                                                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" ToolTip="{Binding GroupTooltip}"
+                                                                       Visibility="{Binding HasGroup, Converter={StaticResource BoolToVisibility}}" />
                                                         <ui:SymbolIcon DockPanel.Dock="Right" Symbol="ArrowSwap20" Margin="6,0,0,0"
                                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" ToolTip="{Binding GameReplacementTooltip}"
                                                                        Visibility="{Binding ReplacesGame, Converter={StaticResource BoolToVisibility}}" />
@@ -774,6 +892,15 @@
                                     <Grid>
                                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                                                       DataContext="{Binding ModDetails}">
+                                            <ScrollViewer.Style>
+                                                <Style TargetType="ScrollViewer">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ScrollViewer.Style>
                                             <StackPanel Margin="2,8,6,6">
                                                 <DockPanel>
                                                     <ui:Button DockPanel.Dock="Right" VerticalAlignment="Top" Appearance="Transparent" BorderThickness="0" Padding="4,2"
@@ -825,6 +952,42 @@
                                                                Command="{Binding MakeCollectionCommand}"
                                                                Visibility="{Binding CanMakeCollection, Converter={StaticResource BoolToVisibility}}"
                                                                ToolTip="Jede Datei und jeder Unterordner dieses Ordners wird ein eigener Mod (z. B. für selbst angelegte Sammelordner wie „Haare“)." />
+                                                    <Grid Margin="0,0,6,6">
+                                                        <ui:Button x:Name="MoveMenuButton" Content="Verschieben …" Icon="{ui:SymbolIcon ArrowMove24}"
+                                                                   Command="{Binding ToggleMoveMenuCommand}"
+                                                                   ToolTip="In einen anderen Sammelordner verschieben – Notizen, Tags und Profile bleiben zugeordnet." />
+                                                        <Popup IsOpen="{Binding IsMoveMenuOpen}" PlacementTarget="{Binding ElementName=MoveMenuButton}"
+                                                               Placement="Bottom" StaysOpen="False" AllowsTransparency="True" Width="260">
+                                                            <Border Margin="0,4,0,0" Padding="8" CornerRadius="8" BorderThickness="1"
+                                                                    Background="{DynamicResource ApplicationBackgroundBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="In Sammelordner verschieben" FontWeight="SemiBold" Margin="4,0,4,6" />
+                                                                    <ui:Button Content="Direkt im Mods-Ordner" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch"
+                                                                               Margin="0,0,0,4" Command="{Binding MoveToCollectionCommand}" CommandParameter=""
+                                                                               Visibility="{Binding IsInCollection, Converter={StaticResource BoolToVisibility}}" />
+                                                                    <ItemsControl ItemsSource="{Binding KnownCollections}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate>
+                                                                                <ui:Button Content="{Binding}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch"
+                                                                                           Margin="0,0,0,4"
+                                                                                           Command="{Binding DataContext.MoveToCollectionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                                           CommandParameter="{Binding}" />
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                    <ui:TextBox Text="{Binding MoveTargetText, UpdateSourceTrigger=PropertyChanged}"
+                                                                                PlaceholderText="Neuer Sammelordner …" Margin="0,2,0,4">
+                                                                        <ui:TextBox.InputBindings>
+                                                                            <KeyBinding Key="Enter" Command="{Binding MoveToCollectionCommand}" CommandParameter="{x:Null}" />
+                                                                        </ui:TextBox.InputBindings>
+                                                                    </ui:TextBox>
+                                                                    <ui:Button Content="Verschieben" Icon="{ui:SymbolIcon ArrowMove24}" HorizontalAlignment="Stretch"
+                                                                               HorizontalContentAlignment="Left" Appearance="Primary"
+                                                                               Command="{Binding MoveToCollectionCommand}" CommandParameter="{x:Null}" />
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </Popup>
+                                                    </Grid>
                                                 </WrapPanel>
 
                                                 <TextBlock Text="Notizen" Style="{StaticResource SectionHeader}" Margin="0,8,0,4" />
@@ -833,6 +996,9 @@
                                                 <ui:TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Warum installiert? (z. B. für eine Challenge)" Margin="0,6,0,0" />
                                                 <ui:TextBox Text="{Binding Tags, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Tags, durch Komma getrennt (z. B. Hochzeit, Lieblinge)" Margin="0,6,0,0"
                                                             Icon="{ui:SymbolIcon Tag24}" ToolTip="Tags lassen sich in der Mod-Suche und der globalen Suche finden." />
+                                                <ui:TextBox Text="{Binding Group, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Gruppe (z. B. Haar + passende Accessoires)" Margin="0,6,0,0"
+                                                            Icon="{ui:SymbolIcon LinkMultiple24}"
+                                                            ToolTip="Mods mit demselben Gruppennamen werden immer gemeinsam ein- und ausgeschaltet – z. B. ein Haar-Mod und sein passendes Accessoire." />
                                                 <DockPanel Margin="0,6,0,0">
                                                     <ui:Button DockPanel.Dock="Right" Icon="{ui:SymbolIcon Open24}" Margin="6,0,0,0" ToolTip="Link öffnen"
                                                                Command="{Binding OpenUrlCommand}" CommandParameter="{Binding DownloadUrl}" />
@@ -2777,5 +2943,22 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
+
+        <!-- Drag-and-drop install overlay: shown while a file/folder is dragged over the window
+             (see MainWindow_DragEnter/Drop). IsHitTestVisible="False" so the drop itself still lands
+             on the window underneath rather than this overlay. -->
+        <Border x:Name="DropOverlay" Grid.Row="0" Grid.RowSpan="3" Background="#B0000000"
+                Visibility="Collapsed" IsHitTestVisible="False">
+            <Border Width="420" Padding="28" CornerRadius="12" BorderThickness="2"
+                    BorderBrush="{DynamicResource AccentFillColorDefaultBrush}"
+                    Background="{DynamicResource ApplicationBackgroundBrush}">
+                <StackPanel HorizontalAlignment="Center">
+                    <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10" />
+                    <TextBlock Text="Zum Installieren loslassen" FontWeight="SemiBold" FontSize="16" HorizontalAlignment="Center" />
+                    <TextBlock Text="Archive (.zip, .rar, .7z), Package-/Skript-Dateien oder Ordner" Opacity="0.7"
+                               HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+        </Border>
     </Grid>
 </ui:FluentWindow>

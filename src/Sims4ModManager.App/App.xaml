@@ -18,6 +18,7 @@
             <services:FractionWidthConverter x:Key="FractionWidth" />
             <services:HexToBrushConverter x:Key="HexToBrush" />
             <services:CountToVisibilityConverter x:Key="CountToVisibility" />
+            <services:InverseCountToVisibilityConverter x:Key="InverseCountToVisibility" />
 
             <!-- Status colors: mid tones that stay readable on both dark and light backgrounds. -->
             <SolidColorBrush x:Key="DangerBrush" Color="#F0605A" />

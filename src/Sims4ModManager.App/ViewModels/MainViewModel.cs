@@ -25,6 +25,9 @@ public partial class MainViewModel : ObservableObject
     private readonly ModNotesStore _notes = new();
     private readonly ModSnapshotStore _snapshots = new();
 
+    /// <summary>Per-mod notes/tags/reason/group store, for the "why is this here" export.</summary>
+    public ModNotesStore Notes => _notes;
+
     private IReadOnlyList<ModEntry> _currentMods = Array.Empty<ModEntry>();
 
     public ObservableCollection<ModEntryViewModel> Mods { get; } = new();
@@ -177,6 +180,129 @@ public partial class MainViewModel : ObservableObject
             RefreshModsView();
     }
 
+    // --- Bulk tagging: apply/remove a tag across the grid's current multi-selection, instead of -----
+    // opening each mod's details panel one at a time. Fed from the DataGrid's SelectionChanged event ---
+    // in the code-behind (WPF's DataGrid has no two-way SelectedItems binding). --------------------------
+
+    public ObservableCollection<ModEntryViewModel> SelectedMods { get; } = new();
+
+    /// <summary>Shows the bulk-tag bar once more than one row is selected.</summary>
+    public bool HasMultiSelection => SelectedMods.Count > 1;
+
+    public string BulkSelectionLabel => L.F("{0} Mods ausgewählt:", SelectedMods.Count);
+
+    [ObservableProperty]
+    private string bulkTagText = string.Empty;
+
+    /// <summary>Called by the view whenever the mod grid's selection changes.</summary>
+    public void SetSelectedMods(IEnumerable<ModEntryViewModel> mods)
+    {
+        SelectedMods.Clear();
+        foreach (var mod in mods)
+            SelectedMods.Add(mod);
+        OnPropertyChanged(nameof(HasMultiSelection));
+        OnPropertyChanged(nameof(BulkSelectionLabel));
+    }
+
+    [RelayCommand]
+    private void ApplyBulkTag()
+    {
+        string tag = BulkTagText.Trim();
+        if (tag.Length == 0 || SelectedMods.Count == 0)
+            return;
+
+        foreach (var mod in SelectedMods.ToList())
+        {
+            var note = _notes.Get(mod.Id) ?? new ModNote();
+            if (!note.Tags.Any(t => string.Equals(t, tag, StringComparison.CurrentCultureIgnoreCase)))
+                note.Tags.Add(tag);
+            _notes.Set(mod.Id, note);
+            mod.SetNote(note);
+        }
+        RefreshSelectedModDetails();
+        StatusMessage = L.F("Tag „{0}“ zu {1} Mod(s) hinzugefügt.", tag, SelectedMods.Count);
+        if (ModFilter == FilterWithNotes)
+            RefreshModsView();
+    }
+
+    [RelayCommand]
+    private void RemoveBulkTag()
+    {
+        string tag = BulkTagText.Trim();
+        if (tag.Length == 0 || SelectedMods.Count == 0)
+            return;
+
+        int removed = 0;
+        foreach (var mod in SelectedMods.ToList())
+        {
+            var note = _notes.Get(mod.Id);
+            if (note is null || note.Tags.RemoveAll(t => string.Equals(t, tag, StringComparison.CurrentCultureIgnoreCase)) == 0)
+                continue;
+            _notes.Set(mod.Id, note);
+            mod.SetNote(note);
+            removed++;
+        }
+        RefreshSelectedModDetails();
+        StatusMessage = removed > 0
+            ? L.F("Tag „{0}“ von {1} Mod(s) entfernt.", tag, removed)
+            : L.F("Kein ausgewählter Mod hatte den Tag „{0}“.", tag);
+        if (ModFilter == FilterWithNotes)
+            RefreshModsView();
+    }
+
+    [ObservableProperty]
+    private string bulkGroupText = string.Empty;
+
+    /// <summary>Puts every selected mod into the same "always enable together" group, replacing any group they had.</summary>
+    [RelayCommand]
+    private void SetBulkGroup()
+    {
+        string group = BulkGroupText.Trim();
+        if (group.Length == 0 || SelectedMods.Count == 0)
+            return;
+
+        foreach (var mod in SelectedMods.ToList())
+        {
+            var note = _notes.Get(mod.Id) ?? new ModNote();
+            note.Group = group;
+            _notes.Set(mod.Id, note);
+            mod.SetNote(note);
+        }
+        RefreshSelectedModDetails();
+        StatusMessage = L.F("{0} Mod(s) zur Gruppe „{1}“ hinzugefügt.", SelectedMods.Count, group);
+    }
+
+    /// <summary>Takes every selected mod out of its "always enable together" group, if any.</summary>
+    [RelayCommand]
+    private void ClearBulkGroup()
+    {
+        if (SelectedMods.Count == 0)
+            return;
+
+        int cleared = 0;
+        foreach (var mod in SelectedMods.ToList())
+        {
+            var note = _notes.Get(mod.Id);
+            if (note?.Group is null)
+                continue;
+            note.Group = null;
+            _notes.Set(mod.Id, note);
+            mod.SetNote(note);
+            cleared++;
+        }
+        RefreshSelectedModDetails();
+        StatusMessage = cleared > 0
+            ? L.F("{0} Mod(s) aus ihrer Gruppe entfernt.", cleared)
+            : L.T("Kein ausgewählter Mod war Teil einer Gruppe.");
+    }
+
+    /// <summary>Re-reads the open details panel's note fields after a bulk edit, in case it's part of the selection.</summary>
+    private void RefreshSelectedModDetails()
+    {
+        if (SelectedMod is { } mod && SelectedMods.Contains(mod))
+            ModDetails = new ModDetailsViewModel(this, _notes, mod);
+    }
+
     // --- Selected mod (details panel) ---------------------------------------------------------------
 
     [ObservableProperty]
@@ -246,6 +372,26 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<ToastViewModel> Toasts { get; } = new();
 
+    /// <summary>Last <see cref="ToastHistoryLimit"/> toasts, newest first, kept after they auto-dismiss.</summary>
+    public ObservableCollection<ToastViewModel> ToastHistory { get; } = new();
+
+    private const int ToastHistoryLimit = 30;
+
+    [ObservableProperty]
+    private bool isToastHistoryOpen;
+
+    /// <summary>True once a toast has arrived that the history popup hasn't been opened to see yet.</summary>
+    [ObservableProperty]
+    private bool hasUnseenToasts;
+
+    [RelayCommand]
+    private void ToggleToastHistory()
+    {
+        IsToastHistoryOpen = !IsToastHistoryOpen;
+        if (IsToastHistoryOpen)
+            HasUnseenToasts = false;
+    }
+
     public void ShowToast(string message, ToastKind kind = ToastKind.Info)
     {
         var toast = new ToastViewModel(message, kind);
@@ -257,6 +403,12 @@ public partial class MainViewModel : ObservableObject
             Toasts.Remove(toast);
         };
         timer.Start();
+
+        ToastHistory.Insert(0, toast);
+        while (ToastHistory.Count > ToastHistoryLimit)
+            ToastHistory.RemoveAt(ToastHistory.Count - 1);
+        if (!IsToastHistoryOpen)
+            HasUnseenToasts = true;
     }
 
     [RelayCommand]
@@ -532,7 +684,8 @@ public partial class MainViewModel : ObservableObject
         ShowModsPath(resolution.Path);
         if (resolution.Path is not null)
         {
-            _ = RescanModsForStartupAsync(resolution.Notice is null ? null : L.T(resolution.Notice));
+            var startupScan = RescanModsForStartupAsync(resolution.Notice is null ? null : L.T(resolution.Notice));
+            _ = RunUpdateCheckAfterAsync(startupScan);
         }
         else if (resolution.Notice is not null)
         {
@@ -542,6 +695,16 @@ public partial class MainViewModel : ObservableObject
         _ = Game.RefreshAsync(); // loads (or builds) the game index in the background
         _ = AppUpdate.CheckAsync();
         _ = ShowWhatsNewIfNeededAsync(settings);
+    }
+
+    /// <summary>
+    /// Waits for the startup mod scan before running the background CurseForge update check - starting
+    /// it any earlier would see an empty mod list and burn its rate-limited check window for nothing.
+    /// </summary>
+    private async Task RunUpdateCheckAfterAsync(Task scanTask)
+    {
+        await scanTask;
+        await Updates.CheckIfDueAsync();
     }
 
     /// <summary>
@@ -835,6 +998,8 @@ public partial class MainViewModel : ObservableObject
             }
 
             vm.SetNote(_notes.Get(mod.Id));
+            vm.IsBroken = mod.Files.Any(f => f.IsUnreadable);
+            vm.HasUpdateAvailable = Updates.ModIdsWithUpdates.Contains(mod.Id);
             if (Catalog.HasData)
             {
                 vm.CategoryLabel = Catalog.CategoryLabelOf(mod);
@@ -952,8 +1117,20 @@ public partial class MainViewModel : ObservableObject
     {
         ModEditCommitNeeded?.Invoke();
 
-        // Disabling CC that a save uses makes Sims lose hair/clothes/furniture there - ask first.
-        var savesUsing = enable ? Array.Empty<string>() : Saves.SavesUsing(vm.Model);
+        // "Always enable together" group: other mods sharing vm's group name that aren't already in
+        // the target state toggle along with it, as one journaled action.
+        string? group = _notes.Get(vm.Id)?.Group;
+        var mates = group is null
+            ? Array.Empty<ModEntry>()
+            : _currentMods.Where(m => !string.Equals(m.Id, vm.Id, StringComparison.OrdinalIgnoreCase)
+                                       && string.Equals(_notes.Get(m.Id)?.Group, group, StringComparison.CurrentCultureIgnoreCase)
+                                       && (m.IsEnabled != enable || m.IsPartiallyEnabled))
+                .ToArray();
+
+        // Disabling CC that a save uses makes Sims lose hair/clothes/furniture there - ask first,
+        // for vm and every grouped mate that would be disabled along with it.
+        var affected = mates.Length == 0 ? new[] { vm.Model } : new[] { vm.Model }.Concat(mates).ToArray();
+        var savesUsing = enable ? new List<string>() : affected.SelectMany(Saves.SavesUsing).Distinct().ToList();
         if (savesUsing.Count > 0 && !await _dialogs.ConfirmAsync(L.T("Wird in Spielständen verwendet"),
                 L.F("„{0}“ wird in {1} verwendet. Ohne diesen CC fehlen dort Kleidung, Haare oder Objekte (beim Speichern werden sie durch Standardinhalte ersetzt).",
                     vm.DisplayName, string.Join(", ", savesUsing)) + "\n\n" + L.T("Trotzdem deaktivieren?"),
@@ -963,14 +1140,31 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        ToggleResult result;
-        using (var recorder = Journal.Begin(enable ? L.F("„{0}“ aktiviert", vm.DisplayName) : L.F("„{0}“ deaktiviert", vm.DisplayName)))
-            result = ModToggleService.SetEnabled(vm.Model, enable, recorder);
+        string description = mates.Length == 0
+            ? (enable ? L.F("„{0}“ aktiviert", vm.DisplayName) : L.F("„{0}“ deaktiviert", vm.DisplayName))
+            : (enable ? L.F("„{0}“ und {1} gruppierte Mod(s) aktiviert", vm.DisplayName, mates.Length)
+                      : L.F("„{0}“ und {1} gruppierte Mod(s) deaktiviert", vm.DisplayName, mates.Length));
+
+        var failures = new List<ToggleFailure>();
+        using (var recorder = Journal.Begin(description))
+        {
+            var result = ModToggleService.SetEnabled(vm.Model, enable, recorder);
+            if (!result.Success)
+                failures.AddRange(result.Failures);
+            foreach (var mate in mates)
+            {
+                var mateResult = ModToggleService.SetEnabled(mate, enable, recorder);
+                if (!mateResult.Success)
+                    failures.AddRange(mateResult.Failures);
+            }
+        }
 
         await RescanModsAsync();
         History.Refresh(selectNewest: true);
-        if (!result.Success)
-            StatusMessage = L.F("Fehler: {0}", string.Join("; ", result.Failures.Select(f => $"{Path.GetFileName(f.FilePath)}: {f.Message}")));
+        if (failures.Count > 0)
+            StatusMessage = L.F("Fehler: {0}", string.Join("; ", failures.Select(f => $"{Path.GetFileName(f.FilePath)}: {f.Message}")));
+        else if (mates.Length > 0)
+            StatusMessage = description;
     }
 
     /// <summary>
@@ -1020,6 +1214,50 @@ public partial class MainViewModel : ObservableObject
         File.Delete(source);
         AfterChange();
         StatusMessage = L.F("„{0}“ ist jetzt ein Sammelordner.", mod.DisplayName) + " " + UndoHint;
+    }
+
+    /// <summary>
+    /// Re-applies the "update available" row icon from the Updates tab's last check without a full
+    /// rescan - called right after that check finishes, since it doesn't itself touch any mod files.
+    /// </summary>
+    public void RefreshModUpdateFlags()
+    {
+        foreach (var mod in Mods)
+            mod.HasUpdateAvailable = Updates.ModIdsWithUpdates.Contains(mod.Id);
+    }
+
+    /// <summary>Every collection folder currently in use, for the "move to collection" picker.</summary>
+    public IReadOnlyList<string> KnownCollections => _currentMods
+        .Select(m => m.Collection).Where(c => c.Length > 0)
+        .Distinct(StringComparer.CurrentCultureIgnoreCase)
+        .OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+    /// <summary>
+    /// Moves a mod into a different collection folder (or, with an empty target, directly into the
+    /// Mods folder) instead of dragging it in Explorer. The mod's ID is just its file/folder name -
+    /// see <see cref="Sims4ModManager.Core.ModScanner"/> - so notes, tags and profile membership
+    /// keep pointing at it afterward without anything to update.
+    /// </summary>
+    public async Task MoveModToCollectionAsync(ModEntry mod, string targetCollection)
+    {
+        if (ModsPath is null || !await EnsureGameClosedAsync())
+            return;
+
+        string target = targetCollection.Trim().Trim('\\', '/');
+        string targetLabel = target.Length == 0 ? L.T("den Mods-Ordner") : L.F("den Sammelordner „{0}“", target);
+
+        ModMoveResult result;
+        using (var recorder = Journal.Begin(L.F("„{0}“ in {1} verschoben", mod.DisplayName, targetLabel)))
+            result = ModMover.Move(mod, ModsPath, target, recorder);
+
+        if (!result.Success)
+        {
+            StatusMessage = result.Reason ?? L.T("Verschieben nicht möglich.");
+            return;
+        }
+
+        AfterChange();
+        StatusMessage = L.F("„{0}“ in {1} verschoben.", mod.DisplayName, targetLabel) + " " + UndoHint;
     }
 
     // --- Download watcher --------------------------------------------------------------------------

@@ -48,6 +48,11 @@ public partial class UpdatesViewModel : ObservableObject
 
     private IReadOnlyList<InstalledCurseForgeMod> _all = Array.Empty<InstalledCurseForgeMod>();
 
+    /// <summary>Mod IDs with a newer CurseForge release, for the "update available" row icon in the Mods tab.</summary>
+    public IReadOnlySet<string> ModIdsWithUpdates => _all.Where(m => m.UpdateAvailable)
+        .SelectMany(m => m.LocalFiles.Select(l => l.Mod.Id))
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
     partial void OnOnlyUpdatesChanged(bool value) => ShowMods();
 
     [RelayCommand]
@@ -97,6 +102,7 @@ public partial class UpdatesViewModel : ObservableObject
             _all = result.Mods;
             _settings.TryUpdate(s => s.LastUpdateCheckUtc = DateTime.UtcNow);
             ShowMods();
+            _main.RefreshModUpdateFlags();
             UpdateCount = result.Mods.Count(m => m.UpdateAvailable);
             LinkedModCount = _main.Mods.Count(m => m.NoteTooltip?.Contains("http", StringComparison.OrdinalIgnoreCase) == true);
             Summary = L.F("{0} von {1} Dateien stammen von CurseForge ({2} Projekte) – {3} Update(s) verfügbar.",
@@ -119,6 +125,28 @@ public partial class UpdatesViewModel : ObservableObject
 
     [RelayCommand]
     private void Cancel() => _cancel?.Cancel();
+
+    private static readonly TimeSpan AutoCheckInterval = TimeSpan.FromHours(12);
+
+    /// <summary>
+    /// Runs the update check once in the background shortly after startup - mirrors
+    /// <see cref="AppUpdateViewModel.CheckAsync"/>'s silent startup check, but gated behind an API
+    /// key (skipped silently without one) and paced by <see cref="AutoCheckInterval"/> instead of
+    /// running on every launch, since this is a real CurseForge API call subject to rate limits,
+    /// unlike the other tabs' badges which just piggyback on the existing mod-folder rescan.
+    /// </summary>
+    public async Task CheckIfDueAsync()
+    {
+        if (!HasApiKey || IsBusy)
+            return;
+        var last = _settings.Load().LastUpdateCheckUtc;
+        if (last is not null && DateTime.UtcNow - last.Value < AutoCheckInterval)
+            return;
+
+        await CheckAsync();
+        if (UpdateCount > 0)
+            _main.ShowToast(L.F("{0} Mod-Update(s) auf CurseForge verfügbar.", UpdateCount), ToastKind.Info);
+    }
 
     private void ShowMods()
     {
