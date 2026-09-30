@@ -128,6 +128,12 @@ adheres to [Semantic Versioning](https://semver.org/).
   per-screen checklist (four screens already checked off with their CHANGELOG reference, the rest
   still open) instead of one paragraph of prose. `README.md` and `docs/README.md` now describe it
   as a checkable development TODO rather than a plain idea list.
+- Closed the "deeper mod optimization tooling" [docs/ROADMAP.md](docs/ROADMAP.md#mod-management)
+  item: texture downscaling and thumbnail debloating shipped (see above); script merging was
+  researched and deliberately declined rather than built - community consensus is that merging
+  `.ts4script` files breaks mods roughly 9 times out of 10 (module/namespace collisions) and works
+  against per-mod updates after game patches, which this app's whole toggle/undo model depends on.
+  No code changed for that sub-item.
 
 ## [1.3.0] - 2026-09-29
 

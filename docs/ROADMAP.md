@@ -99,7 +99,7 @@ so it stays a live list of open work, not an archive. Suggestions and votes are 
   updates are found. Verified live against a real account/library: found 17 real updates on first
   run, correctly updated the CurseForge tab badge and the new per-row update-available icon, and
   persisted the check timestamp (see [CHANGELOG.md](../CHANGELOG.md)).
-- [ ] Deeper mod optimization tooling: go beyond the current diagnostics to automatically detect and
+- [x] Deeper mod optimization tooling: go beyond the current diagnostics to automatically detect and
   fix more problem classes, plus performance-focused operations for large mod lists:
   - [x] Texture downscaling: a new "Verkleinern …" button on the Storage tab's new "Überdimensionierte
     Texturen" card downscales CAS/object DDS textures above 2048×2048 to the next-smaller power of
@@ -122,8 +122,15 @@ so it stays a live list of open work, not an archive. Suggestions and votes are 
     ImageSharp after finding the pinnable pre-split-license version carries several unpatched
     high-severity CVEs - a real concern for a tool that parses untrusted downloaded files) for
     decode/box-filter-resize/re-encode (see [CHANGELOG.md](../CHANGELOG.md)).
-  - [ ] Script merging: combine multiple small script mods' Python modules to cut per-file scan/load
-    overhead. Higher-risk than the two above since it touches mod code directly, not just asset data.
+  - [x] Script merging: researched and deliberately declined, not implemented. `.ts4script` files are
+    plain zip archives (see `Scripts/ScriptArchiveReader.cs`), so combining them is a pure container
+    operation with no Python-parsing risk of its own - but community consensus is clear that merging
+    script mods breaks them roughly 9 times out of 10 (module/namespace collisions between unrelated
+    mods) and, more fundamentally, works against this app's own undo/toggle-per-mod model: script
+    mods need frequent per-mod updates after game patches, which merging would block without an
+    unmerge step first. No established manifest format or community tooling precedent exists for it
+    either, unlike `.package` merging (which interoperates with Sims 4 Studio's format). Left alone
+    rather than shipped against documented community advice.
 - [ ] Known community batch-fixes for broken CC, applied from inside the app: Sims 4 Studio ships
   curated "Batch Fix" routines (Tools > Content Management > Batch Fixes) for recurring, well-
   understood breakage - e.g. CAS items with arms stuck to sides after a game update - backing up
