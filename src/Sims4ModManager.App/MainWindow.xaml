@@ -1070,6 +1070,10 @@
                                         </ui:Button.Style>
                                         <TextBlock><Run Text="Sichere Lösungen (" /><Run Text="{Binding SafeProposalCount, Mode=OneWay}" /><Run Text=")" /></TextBlock>
                                     </ui:Button>
+                                    <ui:Button DockPanel.Dock="Right" Icon="{ui:SymbolIcon ArrowExportUp24}" Margin="8,0,0,0" VerticalAlignment="Top"
+                                               Command="{Binding ExportConflictReportCommand}"
+                                               ToolTip="Alle Konfliktgruppen, betroffenen Ressourcen und Lösungsvorschläge als Text- oder CSV-Datei exportieren – z. B. um in der Community um Hilfe zu bitten."
+                                               Content="Bericht exportieren …" />
                                     <ui:SymbolIcon DockPanel.Dock="Left" Symbol="BranchFork24" Margin="0,0,6,0" VerticalAlignment="Top" />
                                     <TextBlock Style="{StaticResource SectionHeader}" Text="{Binding ConflictSummary}"
                                                ToolTip="Ressourcen, die mehrere aktive Mods in unterschiedlicher Version bereitstellen – im Spiel gewinnt nur eine davon. Byte-identische Duplikate werden ignoriert." />

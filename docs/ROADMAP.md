@@ -146,8 +146,11 @@ so it stays a live list of open work, not an archive. Suggestions and votes are 
 - [ ] Conflict resolution history: remember which proposal was applied for a given conflict group so
   re-running the resolver after adding mods doesn't ask about already-decided conflicts again.
 - [ ] Severity-weighted "safe resolutions" preview before applying, showing exactly which files change.
-- [ ] Export a conflict report (already possible for the mod list) as a shareable document for asking
-  for help in the community.
+- [x] Export a conflict report (already possible for the mod list) as a shareable document for asking
+  for help in the community. A new "Bericht exportieren …" button in the Conflicts tab's header
+  writes every conflict group (affected mods, resources/script modules, severity, and the
+  resolver's recommended fix) to a text or CSV document - what "Export list …" already does for
+  the mod list, but for conflicts (see [CHANGELOG.md](../CHANGELOG.md)).
 - [ ] Persistent "ignore this conflict" dismissal for overlaps a user has reviewed and accepted (e.g. an
   intentional override), so it stops resurfacing in the count on every rescan without disabling
   either file.

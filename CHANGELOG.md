@@ -62,6 +62,12 @@ adheres to [Semantic Versioning](https://semver.org/).
   ("N mod update(s) available on CurseForge.") when it finds any, instead of only ever reflecting
   whatever the last manual "Check now" click happened to see. Closes the "automatic background
   CurseForge update check" item from [docs/ROADMAP.md](docs/ROADMAP.md#mod-management).
+- Conflict report export: a new "Bericht exportieren …" button in the Conflicts tab's header
+  writes every conflict group - its affected mods, resources/script modules, severity, and the
+  resolver's recommended fix - to a text or CSV document, for asking the community for help with a
+  conflict the in-app resolver doesn't safely auto-fix. Mirrors the existing mod-list/notes export
+  buttons. Closes the "export a conflict report" item from
+  [docs/ROADMAP.md](docs/ROADMAP.md#conflict-resolution).
 
 ### Fixed
 

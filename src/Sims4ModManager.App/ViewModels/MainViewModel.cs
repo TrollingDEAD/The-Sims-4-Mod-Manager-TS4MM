@@ -12,6 +12,7 @@ using Sims4ModManager.Core;
 using Sims4ModManager.Core.Backup;
 using Sims4ModManager.Core.Catalog;
 using Sims4ModManager.Core.Conflicts;
+using Sims4ModManager.Core.Export;
 using Sims4ModManager.Core.Localization;
 using Sims4ModManager.Core.Models;
 using Sims4ModManager.Core.Updates;
@@ -631,6 +632,33 @@ public partial class MainViewModel : ObservableObject
         AfterChange();
         StatusMessage = L.F("{0} Datei(en) deaktiviert.", ok) +
                         (errors.Count > 0 ? " " + L.F("{0} Fehler: {1}", errors.Count, string.Join("; ", errors.Take(2))) : "") + $" {UndoHint}";
+    }
+
+    /// <summary>Exports every conflict group, its affected resources and the resolver's recommended fix as a shareable document.</summary>
+    [RelayCommand]
+    private void ExportConflictReport()
+    {
+        if (_lastReport.Groups.Count == 0)
+        {
+            StatusMessage = L.T("Keine Konflikte zwischen aktiven Mods.");
+            return;
+        }
+
+        string? path = _dialogs.PickSaveFile(L.T("Konfliktbericht exportieren"), "Textdatei|*.txt|CSV-Tabelle (Excel)|*.csv",
+            L.F("Sims4-Konfliktbericht {0:yyyy-MM-dd}.txt", DateTime.Now));
+        if (path is null)
+            return;
+
+        var format = path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) ? ModListFormat.Csv : ModListFormat.Text;
+        try
+        {
+            ConflictReportExporter.Write(_lastReport, _allProposals, path, format);
+            StatusMessage = L.F("Konfliktbericht exportiert: {0}", path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            StatusMessage = L.F("Export fehlgeschlagen: {0}", ex.Message);
+        }
     }
 
     private ConflictReport _lastReport = ConflictReport.Empty;
