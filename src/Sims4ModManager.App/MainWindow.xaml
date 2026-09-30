@@ -2192,20 +2192,20 @@
                         </Grid.RowDefinitions>
 
                         <!-- Key figures -->
-                        <UniformGrid Grid.Row="0" Rows="1" Margin="0,0,0,10">
-                            <Border Style="{StaticResource StorageCard}" Margin="0,0,8,0">
+                        <UniformGrid Grid.Row="0" Rows="2" Margin="0,0,0,10">
+                            <Border Style="{StaticResource StorageCard}" Margin="0,0,8,8">
                                 <StackPanel>
                                     <TextBlock Text="Mods-Ordner gesamt" Style="{StaticResource CaptionText}" />
                                     <TextBlock Text="{Binding TotalLabel}" FontSize="16" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Border>
-                            <Border Style="{StaticResource StorageCard}" Margin="0,0,8,0" ToolTip="Deaktivierte Mods belegen weiter Platz, werden aber nicht geladen.">
+                            <Border Style="{StaticResource StorageCard}" Margin="0,0,8,8" ToolTip="Deaktivierte Mods belegen weiter Platz, werden aber nicht geladen.">
                                 <StackPanel>
                                     <TextBlock Text="davon deaktiviert" Style="{StaticResource CaptionText}" />
                                     <TextBlock Text="{Binding DisabledLabel}" FontSize="16" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Border>
-                            <Border Style="{StaticResource StorageCard}" Margin="0,0,8,0" ToolTip="Byte-identische Dateien an mehreren Stellen: alle Kopien bis auf eine sind überflüssig.">
+                            <Border Style="{StaticResource StorageCard}" Margin="0,0,0,8" ToolTip="Byte-identische Dateien an mehreren Stellen: alle Kopien bis auf eine sind überflüssig.">
                                 <StackPanel>
                                     <TextBlock Text="Doppelte Dateien" Style="{StaticResource CaptionText}" />
                                     <TextBlock Text="{Binding DuplicatesLabel}" FontSize="16" FontWeight="SemiBold" />
@@ -2221,13 +2221,23 @@
                                     </StackPanel>
                                 </DockPanel>
                             </Border>
-                            <Border Style="{StaticResource StorageCard}" ToolTip="Texturen über 2048×2048 Pixel: mehr Detail, als das Spiel bei üblichem Kameraabstand auflöst. Verkleinern erzeugt eine neue, vollständige Mip-Kette im gleichen Kompressionsformat.">
+                            <Border Style="{StaticResource StorageCard}" Margin="0,0,8,0" ToolTip="Texturen über 2048×2048 Pixel: mehr Detail, als das Spiel bei üblichem Kameraabstand auflöst. Verkleinern erzeugt eine neue, vollständige Mip-Kette im gleichen Kompressionsformat.">
                                 <DockPanel>
                                     <ui:Button DockPanel.Dock="Right" Icon="{ui:SymbolIcon ResizeImage24}" Content="Verkleinern …" VerticalAlignment="Center"
                                                Command="{Binding DownscaleTexturesCommand}" IsEnabled="{Binding HasOversizedTextures}" Margin="8,0,0,0" />
                                     <StackPanel>
                                         <TextBlock Text="Überdimensionierte Texturen" Style="{StaticResource CaptionText}" />
                                         <TextBlock Text="{Binding OversizedTexturesLabel}" FontSize="16" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                            <Border Style="{StaticResource StorageCard}" ToolTip="Katalog-Vorschaubilder über 256×256 Pixel ohne Transparenz: das Spiel zeigt sie im Katalog ohnehin nur klein an. Vorschaubilder mit Transparenz (z. B. Haar/Kleidung) bleiben unangetastet.">
+                                <DockPanel>
+                                    <ui:Button DockPanel.Dock="Right" Icon="{ui:SymbolIcon ImageEdit24}" Content="Verkleinern …" VerticalAlignment="Center"
+                                               Command="{Binding DownscaleThumbnailsCommand}" IsEnabled="{Binding HasOversizedThumbnails}" Margin="8,0,0,0" />
+                                    <StackPanel>
+                                        <TextBlock Text="Überdimensionierte Vorschaubilder" Style="{StaticResource CaptionText}" />
+                                        <TextBlock Text="{Binding OversizedThumbnailsLabel}" FontSize="16" FontWeight="SemiBold" />
                                     </StackPanel>
                                 </DockPanel>
                             </Border>

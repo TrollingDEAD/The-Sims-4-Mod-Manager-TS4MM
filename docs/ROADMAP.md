@@ -109,10 +109,19 @@ so it stays a live list of open work, not an archive. Suggestions and votes are 
     BCnEncoder.Net recognizes its compression as well-formed; anything else is left untouched rather
     than guessed at, since this codebase had no prior texture-codec groundwork to build on (see
     [CHANGELOG.md](../CHANGELOG.md)).
-  - [ ] Debloating unused resources: detect and strip known-safe-to-remove bloat (e.g. redundant or
-    unused thumbnail resources) from packages. Deliberately not attempted alongside texture
-    downscaling - needs precise, sourced knowledge of which resource types are truly safe to drop
-    without breaking the mod, which the codebase doesn't have yet either.
+  - [x] Debloating unused resources: a new "Verkleinern …" button on the Storage tab's new
+    "Überdimensionierte Vorschaubilder" card downscales oversized CAS/Build-Buy catalog preview
+    thumbnails (the optional, creator-supplied JPEG shown in the catalog grid - not the item's real
+    in-game texture). Deleting them outright (Sims 4 Studio's "Delete CC thumbnails" batch fix) was
+    ruled out: this app's own Catalog tab reads the same resource for its own previews, so deleting
+    would blank those too. Downscaling instead keeps both working. Thumbnails carrying the
+    undocumented "ALFA" transparency segment `ThumbnailLoader` already decodes (hair/clothes cutouts)
+    are left untouched - this codebase can only decode that scheme, not safely reconstruct it, so
+    only opaque thumbnails (most Build/Buy objects) are touched. Uses the new
+    BitMiracle.LibJpeg.NET dependency (BSD-licensed, no build-time key, chosen over a newer
+    ImageSharp after finding the pinnable pre-split-license version carries several unpatched
+    high-severity CVEs - a real concern for a tool that parses untrusted downloaded files) for
+    decode/box-filter-resize/re-encode (see [CHANGELOG.md](../CHANGELOG.md)).
   - [ ] Script merging: combine multiple small script mods' Python modules to cut per-file scan/load
     overhead. Higher-risk than the two above since it touches mod code directly, not just asset data.
 - [ ] Known community batch-fixes for broken CC, applied from inside the app: Sims 4 Studio ships

@@ -30,8 +30,10 @@ public partial class StorageViewModel : ObservableObject
     [ObservableProperty] private string duplicatesLabel = "–";
     [ObservableProperty] private string uncompressedLabel = "–";
     [ObservableProperty] private string oversizedTexturesLabel = "–";
+    [ObservableProperty] private string oversizedThumbnailsLabel = "–";
     [ObservableProperty] private bool hasDuplicates;
     [ObservableProperty] private bool hasOversizedTextures;
+    [ObservableProperty] private bool hasOversizedThumbnails;
 
     public async Task RefreshAsync()
     {
@@ -44,7 +46,8 @@ public partial class StorageViewModel : ObservableObject
         try
         {
             var report = await Task.Run(() => StorageAnalyzer.Analyze(mods, m => categories[m], m => creators[m]));
-            var oversizedTextures = await Task.Run(() => CountOversizedTextures(mods));
+            var oversizedTextures = await Task.Run(() => CountOversized(mods, TextureTools.RecommendedMaxDimension, TextureTools.Inspect));
+            var oversizedThumbnails = await Task.Run(() => CountOversized(mods, ThumbnailTools.RecommendedMaxDimension, ThumbnailTools.Inspect));
             if (version != _version)
                 return;
             _report = report;
@@ -54,6 +57,11 @@ public partial class StorageViewModel : ObservableObject
                 ? L.T("keine")
                 : L.F("{0} in {1} Packages", oversizedTextures.Count, oversizedTextures.Files);
             HasOversizedTextures = oversizedTextures.Count > 0;
+
+            OversizedThumbnailsLabel = oversizedThumbnails.Count == 0
+                ? L.T("keine")
+                : L.F("{0} in {1} Packages", oversizedThumbnails.Count, oversizedThumbnails.Files);
+            HasOversizedThumbnails = oversizedThumbnails.Count > 0;
         }
         finally
         {
@@ -103,12 +111,17 @@ public partial class StorageViewModel : ObservableObject
     [RelayCommand]
     private Task DownscaleTexturesAsync() => _main.DownscaleTexturesAsync();
 
-    private static (int Count, int Files) CountOversizedTextures(IReadOnlyList<ModEntry> mods)
+    [RelayCommand]
+    private Task DownscaleThumbnailsAsync() => _main.DownscaleThumbnailsAsync();
+
+    private static (int Count, int Files) CountOversized<TCandidate>(
+        IReadOnlyList<ModEntry> mods, int maxDimension,
+        Func<string, IReadOnlyList<PackageResource>, int, IReadOnlyList<TCandidate>> inspect)
     {
         int count = 0, files = 0;
         foreach (var file in mods.SelectMany(m => m.Files).Where(f => f.Kind == ModFileKind.Package && f.IsEnabled))
         {
-            int found = TextureTools.Inspect(file.AbsolutePath, file.Resources, TextureTools.RecommendedMaxDimension).Count;
+            int found = inspect(file.AbsolutePath, file.Resources, maxDimension).Count;
             if (found == 0)
                 continue;
             count += found;

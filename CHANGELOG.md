@@ -79,6 +79,19 @@ adheres to [Semantic Versioning](https://semver.org/).
   "deeper mod optimization tooling" item from
   [docs/ROADMAP.md](docs/ROADMAP.md#mod-management) (texture downscaling only - debloating and
   script merging remain open).
+- Thumbnail debloating: a new "Überdimensionierte Vorschaubilder" card on the Storage tab flags
+  oversized CAS/Build-Buy catalog preview thumbnails above 256×256 pixels, with a "Verkleinern …"
+  button to downscale them in one journaled/undoable step. Deleting them outright (Sims 4 Studio's
+  documented "Delete CC thumbnails" batch fix) was ruled out during scoping, since this app's own
+  Catalog tab reads the same resource for its own previews and would lose them too; downscaling
+  keeps both the in-game catalog icon and this app's preview working. Thumbnails carrying the
+  undocumented "ALFA" transparency segment (hair/clothes cutouts) are left untouched, since this
+  codebase can only decode that scheme, not safely rebuild it. Adds the BitMiracle.LibJpeg.NET
+  package for the JPEG decode/resize/re-encode (chosen over a newer ImageSharp version after
+  finding the license-compatible pre-split-license release carries several unpatched high-severity
+  CVEs). Closes the "debloating unused resources" item from
+  [docs/ROADMAP.md](docs/ROADMAP.md#mod-management) (texture downscaling already closed; script
+  merging remains open).
 
 ### Fixed
 

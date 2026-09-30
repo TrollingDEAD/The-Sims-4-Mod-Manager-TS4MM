@@ -185,4 +185,64 @@ public partial class MainViewModel
                         (errors.Count > 0 ? " " + L.F("{0} Fehler: {1}", errors.Count, string.Join("; ", errors.Take(2))) : "") + " " + UndoHint;
         AfterChange();
     }
+
+    /// <summary>
+    /// Downscales every enabled package's oversized catalog thumbnails (larger than
+    /// <see cref="ThumbnailTools.RecommendedMaxDimension"/> on either axis) - some creators embed
+    /// unnecessarily large preview images. Thumbnails that carry the undocumented "ALFA" transparency
+    /// segment are left untouched, since this codebase can only decode that scheme, not safely rebuild
+    /// it ("Speicherplatz" tab).
+    /// </summary>
+    public async Task DownscaleThumbnailsAsync()
+    {
+        var candidates = CurrentMods.SelectMany(m => m.Files)
+            .Where(f => f.Kind == ModFileKind.Package && f.IsEnabled)
+            .Select(f => (File: f, Thumbnails: ThumbnailTools.Inspect(f.AbsolutePath, f.Resources, ThumbnailTools.RecommendedMaxDimension)))
+            .Where(x => x.Thumbnails.Count > 0)
+            .ToList();
+        if (candidates.Count == 0)
+        {
+            StatusMessage = L.T("Keine überdimensionierten Vorschaubilder gefunden.");
+            return;
+        }
+
+        int thumbnailCount = candidates.Sum(c => c.Thumbnails.Count);
+        if (!await EnsureGameClosedAsync() || !await _dialogs.ConfirmAsync(L.T("Vorschaubilder verkleinern"),
+                L.F("{0} Katalog-Vorschaubilder über {1}×{1} Pixel in {2} Packages werden verkleinert. ", thumbnailCount, ThumbnailTools.RecommendedMaxDimension, candidates.Count) +
+                L.T("Das Spiel zeigt sie im Katalog ohnehin nur sehr klein an; nur Vorschaubilder ohne Transparenz (z. B. die meisten Build/Buy-Objekte) werden angefasst.") +
+                Environment.NewLine + Environment.NewLine +
+                L.T("Die Originale kommen in die Sicherung (Tab „Verlauf“) – der Platz wird erst frei, wenn diese Sicherung gelöscht wird.") + Environment.NewLine + UndoHint,
+                L.T("Verkleinern")))
+            return;
+
+        long saved = 0;
+        int downscaled = 0, skipped = 0;
+        var errors = new List<string>();
+        await Task.Run(() =>
+        {
+            using var recorder = Journal.Begin(L.F("{0} Vorschaubilder verkleinert", thumbnailCount));
+            foreach (var (file, thumbnails) in candidates)
+            {
+                try
+                {
+                    var keys = thumbnails.Select(t => t.Key).ToHashSet();
+                    recorder.Replace(file.AbsolutePath, temp =>
+                    {
+                        var result = ThumbnailTools.Downscale(file.AbsolutePath, temp, keys, ThumbnailTools.RecommendedMaxDimension);
+                        saved += result.Saved;
+                        downscaled += result.Downscaled;
+                        skipped += result.Skipped;
+                    });
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+                {
+                    errors.Add($"{Path.GetFileName(file.AbsolutePath)}: {ex.Message}");
+                }
+            }
+        });
+        StatusMessage = L.F("{0} Vorschaubild(er) verkleinert, {1} gespart.", downscaled, Formatting.Size(saved)) +
+                        (skipped > 0 ? " " + L.F("{0} mit Transparenz übersprungen.", skipped) : "") +
+                        (errors.Count > 0 ? " " + L.F("{0} Fehler: {1}", errors.Count, string.Join("; ", errors.Take(2))) : "") + " " + UndoHint;
+        AfterChange();
+    }
 }
