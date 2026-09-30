@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sims4ModManager.Core;
 using Sims4ModManager.Core.Catalog;
+using Sims4ModManager.Core.Dbpf;
 using Sims4ModManager.Core.Localization;
 using Sims4ModManager.Core.Models;
 
@@ -28,7 +29,9 @@ public partial class StorageViewModel : ObservableObject
     [ObservableProperty] private string disabledLabel = "–";
     [ObservableProperty] private string duplicatesLabel = "–";
     [ObservableProperty] private string uncompressedLabel = "–";
+    [ObservableProperty] private string oversizedTexturesLabel = "–";
     [ObservableProperty] private bool hasDuplicates;
+    [ObservableProperty] private bool hasOversizedTextures;
 
     public async Task RefreshAsync()
     {
@@ -41,10 +44,16 @@ public partial class StorageViewModel : ObservableObject
         try
         {
             var report = await Task.Run(() => StorageAnalyzer.Analyze(mods, m => categories[m], m => creators[m]));
+            var oversizedTextures = await Task.Run(() => CountOversizedTextures(mods));
             if (version != _version)
                 return;
             _report = report;
             Show(report);
+
+            OversizedTexturesLabel = oversizedTextures.Count == 0
+                ? L.T("keine")
+                : L.F("{0} in {1} Packages", oversizedTextures.Count, oversizedTextures.Files);
+            HasOversizedTextures = oversizedTextures.Count > 0;
         }
         finally
         {
@@ -90,6 +99,23 @@ public partial class StorageViewModel : ObservableObject
 
     [RelayCommand]
     private Task CompressAllAsync() => _main.CompressAllAsync();
+
+    [RelayCommand]
+    private Task DownscaleTexturesAsync() => _main.DownscaleTexturesAsync();
+
+    private static (int Count, int Files) CountOversizedTextures(IReadOnlyList<ModEntry> mods)
+    {
+        int count = 0, files = 0;
+        foreach (var file in mods.SelectMany(m => m.Files).Where(f => f.Kind == ModFileKind.Package && f.IsEnabled))
+        {
+            int found = TextureTools.Inspect(file.AbsolutePath, file.Resources, TextureTools.RecommendedMaxDimension).Count;
+            if (found == 0)
+                continue;
+            count += found;
+            files++;
+        }
+        return (count, files);
+    }
 
     /// <summary>Removes all but one copy of each identical file (into the backup, undoable).</summary>
     [RelayCommand]

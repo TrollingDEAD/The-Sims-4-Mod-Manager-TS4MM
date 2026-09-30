@@ -100,8 +100,21 @@ so it stays a live list of open work, not an archive. Suggestions and votes are 
   run, correctly updated the CurseForge tab badge and the new per-row update-available icon, and
   persisted the check timestamp (see [CHANGELOG.md](../CHANGELOG.md)).
 - [ ] Deeper mod optimization tooling: go beyond the current diagnostics to automatically detect and
-  fix more problem classes, plus performance-focused operations for large mod lists - texture
-  scaling/downscaling, debloating unused resources, and script merging.
+  fix more problem classes, plus performance-focused operations for large mod lists:
+  - [x] Texture downscaling: a new "Verkleinern …" button on the Storage tab's new "Überdimensionierte
+    Texturen" card downscales CAS/object DDS textures above 2048×2048 to the next-smaller power of
+    two - decoding the base mip via the new BCnEncoder.Net dependency, box-filtering it down,
+    regenerating a full mip chain and re-encoding with the same block-compression format the
+    original used. Only the resource type documented as a DDS texture is ever touched, and only if
+    BCnEncoder.Net recognizes its compression as well-formed; anything else is left untouched rather
+    than guessed at, since this codebase had no prior texture-codec groundwork to build on (see
+    [CHANGELOG.md](../CHANGELOG.md)).
+  - [ ] Debloating unused resources: detect and strip known-safe-to-remove bloat (e.g. redundant or
+    unused thumbnail resources) from packages. Deliberately not attempted alongside texture
+    downscaling - needs precise, sourced knowledge of which resource types are truly safe to drop
+    without breaking the mod, which the codebase doesn't have yet either.
+  - [ ] Script merging: combine multiple small script mods' Python modules to cut per-file scan/load
+    overhead. Higher-risk than the two above since it touches mod code directly, not just asset data.
 - [ ] Known community batch-fixes for broken CC, applied from inside the app: Sims 4 Studio ships
   curated "Batch Fix" routines (Tools > Content Management > Batch Fixes) for recurring, well-
   understood breakage - e.g. CAS items with arms stuck to sides after a game update - backing up

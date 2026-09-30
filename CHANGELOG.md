@@ -68,6 +68,17 @@ adheres to [Semantic Versioning](https://semver.org/).
   conflict the in-app resolver doesn't safely auto-fix. Mirrors the existing mod-list/notes export
   buttons. Closes the "export a conflict report" item from
   [docs/ROADMAP.md](docs/ROADMAP.md#conflict-resolution).
+- Texture downscaling: a new "Überdimensionierte Texturen" card on the Storage tab flags CAS/object
+  DDS textures above 2048×2048 pixels, with a "Verkleinern …" button to downscale them in one
+  journaled/undoable step - many CC creators ship 4K textures the game never resolves at typical
+  camera distances, and they cost disk space and per-file scan time for no visual gain. Adds the
+  BCnEncoder.Net package to decode the base mip, box-filter it down, regenerate a full mip chain and
+  re-encode with the same block-compression format the original used; a resource whose compression
+  isn't one BCnEncoder.Net recognizes as well-formed is left untouched rather than guessed at, since
+  this codebase had no texture-codec groundwork to build on before this change. Partially closes the
+  "deeper mod optimization tooling" item from
+  [docs/ROADMAP.md](docs/ROADMAP.md#mod-management) (texture downscaling only - debloating and
+  script merging remain open).
 
 ### Fixed
 

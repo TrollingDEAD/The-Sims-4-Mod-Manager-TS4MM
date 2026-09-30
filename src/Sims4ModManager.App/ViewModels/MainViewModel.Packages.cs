@@ -125,4 +125,64 @@ public partial class MainViewModel
                         (errors.Count > 0 ? " " + L.F("{0} Fehler: {1}", errors.Count, string.Join("; ", errors.Take(2))) : "") + " " + UndoHint;
         AfterChange();
     }
+
+    /// <summary>
+    /// Downscales every enabled package's oversized CAS/object textures (larger than
+    /// <see cref="TextureTools.RecommendedMaxDimension"/> on either axis) to a box-filtered, mip-
+    /// complete copy at the recommended size - many CC creators ship 4K textures the game never
+    /// resolves at typical camera distances. Resources whose compression BCnEncoder.Net doesn't
+    /// recognize are left untouched rather than guessed at ("Speicherplatz" tab).
+    /// </summary>
+    public async Task DownscaleTexturesAsync()
+    {
+        var candidates = CurrentMods.SelectMany(m => m.Files)
+            .Where(f => f.Kind == ModFileKind.Package && f.IsEnabled)
+            .Select(f => (File: f, Textures: TextureTools.Inspect(f.AbsolutePath, f.Resources, TextureTools.RecommendedMaxDimension)))
+            .Where(x => x.Textures.Count > 0)
+            .ToList();
+        if (candidates.Count == 0)
+        {
+            StatusMessage = L.T("Keine überdimensionierten Texturen gefunden.");
+            return;
+        }
+
+        int textureCount = candidates.Sum(c => c.Textures.Count);
+        if (!await EnsureGameClosedAsync() || !await _dialogs.ConfirmAsync(L.T("Texturen verkleinern"),
+                L.F("{0} Texturen über {1}×{1} Pixel in {2} Packages werden auf die jeweils nächstpassende Zweierpotenz verkleinert (neue Mip-Kette, gleiches Kompressionsformat). ", textureCount, TextureTools.RecommendedMaxDimension, candidates.Count) +
+                L.T("Das Spiel löst mehr Detail bei üblichem Kameraabstand ohnehin nicht auf; die Bildqualität aus der Nähe kann sichtbar sinken. Nicht erkannte Formate bleiben unverändert.") +
+                Environment.NewLine + Environment.NewLine +
+                L.T("Die Originale kommen in die Sicherung (Tab „Verlauf“) – der Platz wird erst frei, wenn diese Sicherung gelöscht wird.") + Environment.NewLine + UndoHint,
+                L.T("Verkleinern"), destructive: true))
+            return;
+
+        long saved = 0;
+        int downscaled = 0, skipped = 0;
+        var errors = new List<string>();
+        await Task.Run(() =>
+        {
+            using var recorder = Journal.Begin(L.F("{0} Texturen verkleinert", textureCount));
+            foreach (var (file, textures) in candidates)
+            {
+                try
+                {
+                    var keys = textures.Select(t => t.Key).ToHashSet();
+                    recorder.Replace(file.AbsolutePath, temp =>
+                    {
+                        var result = TextureTools.Downscale(file.AbsolutePath, temp, keys, TextureTools.RecommendedMaxDimension);
+                        saved += result.Saved;
+                        downscaled += result.Downscaled;
+                        skipped += result.Skipped;
+                    });
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+                {
+                    errors.Add($"{Path.GetFileName(file.AbsolutePath)}: {ex.Message}");
+                }
+            }
+        });
+        StatusMessage = L.F("{0} Textur(en) verkleinert, {1} gespart.", downscaled, Formatting.Size(saved)) +
+                        (skipped > 0 ? " " + L.F("{0} nicht unterstützte(s) Format(e) übersprungen.", skipped) : "") +
+                        (errors.Count > 0 ? " " + L.F("{0} Fehler: {1}", errors.Count, string.Join("; ", errors.Take(2))) : "") + " " + UndoHint;
+        AfterChange();
+    }
 }

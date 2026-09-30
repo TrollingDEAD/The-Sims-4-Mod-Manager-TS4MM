@@ -2211,13 +2211,23 @@
                                     <TextBlock Text="{Binding DuplicatesLabel}" FontSize="16" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Border>
-                            <Border Style="{StaticResource StorageCard}" ToolTip="Ressourcen, die ohne Kompression im Package liegen. Komprimieren spart hier meist gut die Hälfte – verlustfrei, der Inhalt im Spiel bleibt gleich.">
+                            <Border Style="{StaticResource StorageCard}" Margin="0,0,8,0" ToolTip="Ressourcen, die ohne Kompression im Package liegen. Komprimieren spart hier meist gut die Hälfte – verlustfrei, der Inhalt im Spiel bleibt gleich.">
                                 <DockPanel>
                                     <ui:Button DockPanel.Dock="Right" Icon="{ui:SymbolIcon ArrowMinimize24}" Content="Komprimieren …" VerticalAlignment="Center"
                                                Command="{Binding CompressAllCommand}" Margin="8,0,0,0" />
                                     <StackPanel>
                                         <TextBlock Text="Unkomprimiert gespeichert" Style="{StaticResource CaptionText}" />
                                         <TextBlock Text="{Binding UncompressedLabel}" FontSize="16" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                            <Border Style="{StaticResource StorageCard}" ToolTip="Texturen über 2048×2048 Pixel: mehr Detail, als das Spiel bei üblichem Kameraabstand auflöst. Verkleinern erzeugt eine neue, vollständige Mip-Kette im gleichen Kompressionsformat.">
+                                <DockPanel>
+                                    <ui:Button DockPanel.Dock="Right" Icon="{ui:SymbolIcon ResizeImage24}" Content="Verkleinern …" VerticalAlignment="Center"
+                                               Command="{Binding DownscaleTexturesCommand}" IsEnabled="{Binding HasOversizedTextures}" Margin="8,0,0,0" />
+                                    <StackPanel>
+                                        <TextBlock Text="Überdimensionierte Texturen" Style="{StaticResource CaptionText}" />
+                                        <TextBlock Text="{Binding OversizedTexturesLabel}" FontSize="16" FontWeight="SemiBold" />
                                     </StackPanel>
                                 </DockPanel>
                             </Border>
