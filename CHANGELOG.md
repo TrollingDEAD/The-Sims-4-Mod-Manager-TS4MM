@@ -134,6 +134,12 @@ adheres to [Semantic Versioning](https://semver.org/).
   `.ts4script` files breaks mods roughly 9 times out of 10 (module/namespace collisions) and works
   against per-mod updates after game patches, which this app's whole toggle/undo model depends on.
   No code changed for that sub-item.
+- Closed "known community batch-fixes for broken CC" [docs/ROADMAP.md](docs/ROADMAP.md#mod-management):
+  researched and deliberately declined, not implemented. The flagship example (arms stuck to sides)
+  needs mesh (GEOM) rigging edits, not a simple flag flip, and the simpler-looking CASP flag fixes'
+  only precise byte-level spec lives in GPLv3-licensed code this MIT-licensed project shouldn't port
+  from - mirroring the same caution `CasPartReader.cs` already applies to that resource's drift-prone
+  flag block. No code changed.
 
 ## [1.3.0] - 2026-09-29
 

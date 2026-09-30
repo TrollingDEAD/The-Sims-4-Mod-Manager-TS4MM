@@ -131,13 +131,23 @@ so it stays a live list of open work, not an archive. Suggestions and votes are 
     unmerge step first. No established manifest format or community tooling precedent exists for it
     either, unlike `.package` merging (which interoperates with Sims 4 Studio's format). Left alone
     rather than shipped against documented community advice.
-- [ ] Known community batch-fixes for broken CC, applied from inside the app: Sims 4 Studio ships
-  curated "Batch Fix" routines (Tools > Content Management > Batch Fixes) for recurring, well-
-  understood breakage - e.g. CAS items with arms stuck to sides after a game update - backing up
-  every file it touches first. A small, versioned library of the same well-known fix patterns
-  (sourced from S4S's public documentation of what each fix does, not its code) applied through the
-  existing package-rewrite pipeline and journaled like every other change would close a concrete gap
-  against a tool many players currently alt-tab to specifically for this.
+- [x] Known community batch-fixes for broken CC: researched and deliberately declined, not
+  implemented. The flagship example (arms stuck to sides) turned out not to be a simple flag flip -
+  Sims 4 Studio's own docs call it "Fix Slot Rays (CAS Arm Position)", meaning it recomputes
+  rigging/slot data inside the mesh (GEOM) resource itself, a binary format this codebase has no
+  groundwork for at all. The simpler-looking CASP boolean-flag fixes (disallow CC for random Sims/
+  aliens/the naked default outfit) aren't safe either: the precise byte layout only exists in
+  GPLv3-licensed code (`s4pi`/Sims4Tools, the library Sims 4 Studio itself is built on), which
+  shouldn't be ported into this MIT-licensed project, and this codebase's own `CasPartReader.cs`
+  already drew the same line for a shallower need - its own comments note the flag block "grew over
+  the game's versions" and had to be "measured on real CC" per version, and it deliberately stops
+  short of parsing inside that block, preferring "no details" over a wrong read. Without real sample
+  CC files to verify bit offsets against (none exist in this repo), a wrong flag flip risks
+  misaligning the rest of the resource, not just misbehaving cosmetically. Every other candidate fix
+  in S4S's Objects/Misc batch-fix menus (toddler CC compatibility, City Living TV compatibility,
+  Cats & Dogs object fixes) is the same shape: a deep, versioned, drift-prone tuning-resource edit
+  with no independently verifiable spec available. Worth revisiting if real sample CC files ever
+  become available to test bit offsets against.
 - [ ] Live-while-playing mode: PlumbBuddy can integrate newly added mods while the game keeps running,
   where the existing "warn and block file changes while the game is running" safety net is more
   conservative. Worth a narrow, explicitly-opt-in exception for operations that are safe mid-session
