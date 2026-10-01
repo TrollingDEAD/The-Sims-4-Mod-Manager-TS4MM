@@ -93,6 +93,53 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void ModsGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) =>
         _viewModel.SetSelectedMods(ModsGrid.SelectedItems.Cast<ModEntryViewModel>());
 
+    // --- Drag-and-drop load-order reordering: drag a row onto another to renumber them -------------
+
+    private ModEntryViewModel? _reorderDragCandidate;
+    private Point _reorderDragStart;
+
+    private void ModsGrid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _reorderDragStart = e.GetPosition(null);
+        _reorderDragCandidate = FindModRow(e.OriginalSource as DependencyObject);
+    }
+
+    private void ModsGrid_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _reorderDragCandidate is null)
+            return;
+        var position = e.GetPosition(null);
+        if (Math.Abs(position.X - _reorderDragStart.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(position.Y - _reorderDragStart.Y) < SystemParameters.MinimumVerticalDragDistance)
+            return;
+
+        var dragged = _reorderDragCandidate;
+        _reorderDragCandidate = null; // one drag gesture per mouse-down
+        DragDrop.DoDragDrop(ModsGrid, new DataObject(typeof(ModEntryViewModel), dragged), DragDropEffects.Move);
+    }
+
+    private void ModsGrid_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(typeof(ModEntryViewModel)) ? DragDropEffects.Move : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private async void ModsGrid_Drop(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (e.Data.GetData(typeof(ModEntryViewModel)) is not ModEntryViewModel dragged)
+            return;
+        if (FindModRow(e.OriginalSource as DependencyObject) is { } target && target != dragged)
+            await _viewModel.ReorderModAsync(dragged, target);
+    }
+
+    private static ModEntryViewModel? FindModRow(DependencyObject? source)
+    {
+        while (source is not null and not System.Windows.Controls.DataGridRow)
+            source = System.Windows.Media.VisualTreeHelper.GetParent(source);
+        return (source as System.Windows.Controls.DataGridRow)?.DataContext as ModEntryViewModel;
+    }
+
     // --- Drag-and-drop install: drop a downloaded archive/mod/folder anywhere on the window and have -----
     // it go through the same install pipeline (safety scan included) as a watched Downloads file. ----------
 

@@ -76,6 +76,19 @@ adheres to [Semantic Versioning](https://semver.org/).
   anything the game may already have loaded. Every other mutating operation (toggling, moving,
   merging, resolving conflicts) keeps the confirmation unconditionally. Closes the "live-while-
   playing mode" item from [docs/ROADMAP.md](docs/ROADMAP.md#mod-management).
+- Explicit load-order control: a new "Reihenfolge" column in the Mods tab shows each mod's true
+  effective load-order position - the game scans directories depth-first, merging files and
+  subfolders alphabetically at each level, not "all files first" or "all folders first" as often
+  repeated. Dragging a row onto another renumbers them using the community's numeric-prefix
+  convention (`000_`, `010_`, ...), preferring to rename only the dragged file/folder and falling
+  back to renumbering every sibling only when there's no clean numeric gap available; restricted to
+  siblings sharing the same collection folder (cross-folder drags point to the existing
+  "Verschieben …" action instead). Notes/tags/favorites automatically follow a renamed mod; saved
+  profiles referencing the old name do not, and the confirmation dialog says so. Conflict proposals
+  for Override and script-overlap conflicts (the two kinds without a "safe" auto-fix) now flag when
+  the game's real load order would actually pick a different winner than the proposal's file-date-
+  based recommendation. Closes the "explicit load-order control" item from
+  [docs/ROADMAP.md](docs/ROADMAP.md#load-order--collections).
 - Texture downscaling: a new "Überdimensionierte Texturen" card on the Storage tab flags CAS/object
   DDS textures above 2048×2048 pixels, with a "Verkleinern …" button to downscale them in one
   journaled/undoable step - many CC creators ship 4K textures the game never resolves at typical

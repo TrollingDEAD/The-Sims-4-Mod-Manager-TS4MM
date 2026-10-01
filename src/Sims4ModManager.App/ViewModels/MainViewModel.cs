@@ -13,6 +13,7 @@ using Sims4ModManager.Core.Backup;
 using Sims4ModManager.Core.Catalog;
 using Sims4ModManager.Core.Conflicts;
 using Sims4ModManager.Core.Export;
+using Sims4ModManager.Core.LoadOrder;
 using Sims4ModManager.Core.Localization;
 using Sims4ModManager.Core.Models;
 using Sims4ModManager.Core.Updates;
@@ -30,6 +31,9 @@ public partial class MainViewModel : ObservableObject
     public ModNotesStore Notes => _notes;
 
     private IReadOnlyList<ModEntry> _currentMods = Array.Empty<ModEntry>();
+
+    /// <summary>Effective file load order (absolute path -> 0-based rank), enabled .package/.ts4script files only.</summary>
+    private IReadOnlyDictionary<string, int> _loadOrderRanks = new Dictionary<string, int>();
 
     public ObservableCollection<ModEntryViewModel> Mods { get; } = new();
     public ObservableCollection<ConflictGroupViewModel> ConflictGroups { get; } = new();
@@ -572,7 +576,7 @@ public partial class MainViewModel : ObservableObject
             return;
         foreach (var proposal in ConflictResolver.ForGroup(_allProposals, value.Model)
                      .OrderByDescending(p => p.IsRecommended))
-            GroupProposals.Add(new ResolutionProposalViewModel(proposal));
+            GroupProposals.Add(new ResolutionProposalViewModel(proposal, _loadOrderRanks));
     }
 
     [RelayCommand]
@@ -901,6 +905,7 @@ public partial class MainViewModel : ObservableObject
         {
             StatusMessage = L.T("Mods-Ordner existiert nicht.");
             _currentMods = Array.Empty<ModEntry>();
+            _loadOrderRanks = new Dictionary<string, int>();
             Mods.Clear();
             ShowConflicts(ConflictReport.Empty);
             return;
@@ -908,7 +913,18 @@ public partial class MainViewModel : ObservableObject
 
         var scanned = ModScanner.Scan(ModsPath);
         var report = ConflictDetector.FindConflicts(scanned);
+        _loadOrderRanks = ComputeLoadOrderRanks(ModsPath, scanned);
         ApplyScanResult(scanned, report, selectedId);
+    }
+
+    /// <summary>Ranks every enabled .package/.ts4script file in true scan order - see <see cref="LoadOrderCalculator"/>.</summary>
+    private static IReadOnlyDictionary<string, int> ComputeLoadOrderRanks(string modsPath, IReadOnlyList<ModEntry> mods)
+    {
+        var tracked = mods.SelectMany(m => m.Files)
+            .Where(f => f.IsEnabled && f.Kind is ModFileKind.Package or ModFileKind.Script)
+            .Select(f => f.AbsolutePath)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return LoadOrderCalculator.Rank(modsPath, tracked.Contains);
     }
 
     /// <summary>
@@ -929,11 +945,12 @@ public partial class MainViewModel : ObservableObject
         }
         else
         {
-            var (scanned, report) = await Task.Run(() =>
+            var (scanned, report, ranks) = await Task.Run(() =>
             {
                 var mods = ModScanner.Scan(path);
-                return (mods, ConflictDetector.FindConflicts(mods));
+                return (mods, ConflictDetector.FindConflicts(mods), ComputeLoadOrderRanks(path, mods));
             });
+            _loadOrderRanks = ranks;
             ApplyScanResult(scanned, report, selectedId: null);
         }
 
@@ -972,11 +989,12 @@ public partial class MainViewModel : ObservableObject
         }
         else
         {
-            var (scanned, report) = await Task.Run(() =>
+            var (scanned, report, ranks) = await Task.Run(() =>
             {
                 var mods = ModScanner.Scan(path);
-                return (mods, ConflictDetector.FindConflicts(mods));
+                return (mods, ConflictDetector.FindConflicts(mods), ComputeLoadOrderRanks(path, mods));
             });
+            _loadOrderRanks = ranks;
             ApplyScanResult(scanned, report, selectedId);
         }
 
@@ -1028,6 +1046,8 @@ public partial class MainViewModel : ObservableObject
             vm.SetNote(_notes.Get(mod.Id));
             vm.IsBroken = mod.Files.Any(f => f.IsUnreadable);
             vm.HasUpdateAvailable = Updates.ModIdsWithUpdates.Contains(mod.Id);
+            var tracked = mod.Files.Where(f => f.IsEnabled && _loadOrderRanks.ContainsKey(f.AbsolutePath)).Select(f => _loadOrderRanks[f.AbsolutePath]).ToList();
+            vm.LoadOrderRank = tracked.Count > 0 ? tracked.Min() : null;
             if (Catalog.HasData)
             {
                 vm.CategoryLabel = Catalog.CategoryLabelOf(mod);
@@ -1286,6 +1306,85 @@ public partial class MainViewModel : ObservableObject
 
         AfterChange();
         StatusMessage = L.F("„{0}“ in {1} verschoben.", mod.DisplayName, targetLabel) + " " + UndoHint;
+    }
+
+    /// <summary>
+    /// Drags <paramref name="dragged"/> to <paramref name="target"/>'s position among their shared
+    /// siblings (same collection folder), renaming with the community's numeric load-order prefix
+    /// convention (000_, 010_, ...) - see <see cref="LoadOrderReorderPlanner"/>. Only touches files
+    /// that already share a folder: dragging between different collections is refused in favor of the
+    /// existing "Verschieben …" action, since changing both a mod's folder and its load-order position
+    /// in one step is a bigger, less predictable change than either alone.
+    /// </summary>
+    public async Task ReorderModAsync(ModEntryViewModel dragged, ModEntryViewModel target)
+    {
+        if (ModsPath is null || dragged.Id == target.Id)
+            return;
+        if (!string.Equals(dragged.Model.Collection, target.Model.Collection, StringComparison.OrdinalIgnoreCase))
+        {
+            StatusMessage = L.T("Ziehen funktioniert nur innerhalb desselben Ordners – zum Verschieben zwischen Sammelordnern bitte „Verschieben …“ benutzen.");
+            return;
+        }
+
+        var siblings = _currentMods
+            .Where(m => string.Equals(m.Collection, target.Model.Collection, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(m => Path.GetFileName(m.AbsolutePath), StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        int fromIndex = siblings.FindIndex(m => m.Id == dragged.Id);
+        int toIndex = siblings.FindIndex(m => m.Id == target.Id);
+        if (fromIndex < 0 || toIndex < 0)
+            return;
+
+        var byPath = siblings.ToDictionary(m => m.AbsolutePath, StringComparer.OrdinalIgnoreCase);
+        var items = siblings.Select(m =>
+        {
+            string name = Path.GetFileName(m.AbsolutePath);
+            return new ReorderItem(m.AbsolutePath, name, LoadOrderNaming.TryParsePrefix(name)?.Number);
+        }).ToList();
+
+        var renames = LoadOrderReorderPlanner.Plan(items, fromIndex, toIndex);
+        if (renames.Count == 0)
+        {
+            StatusMessage = L.T("Die Ladereihenfolge ändert sich dadurch nicht.");
+            return;
+        }
+
+        if (!await EnsureGameClosedAsync() || !await _dialogs.ConfirmAsync(L.T("Ladereihenfolge ändern"),
+                L.F("{0} Datei(en)/Ordner werden umbenannt, um „{1}“ an die neue Position zu bringen. ", renames.Count, dragged.DisplayName) +
+                L.T("Eigene Notizen, Tags und Favoriten wandern automatisch mit; gespeicherte Profile, die den alten Namen referenzieren, tun das nicht und müssten neu gespeichert werden.") +
+                Environment.NewLine + Environment.NewLine + UndoHint, L.T("Umbenennen")))
+            return;
+
+        var errors = new List<string>();
+        using (var recorder = Journal.Begin(L.F("Ladereihenfolge geändert: {0}", dragged.DisplayName)))
+        {
+            foreach (var rename in renames)
+            {
+                var mod = byPath[rename.OldPath];
+                try
+                {
+                    if (mod.IsFolder)
+                    {
+                        foreach (var file in mod.Files)
+                            recorder.Move(file.AbsolutePath, Path.Combine(rename.NewPath, file.RelativePathInMod));
+                    }
+                    else
+                    {
+                        recorder.Move(mod.Files[0].AbsolutePath, rename.NewPath);
+                    }
+                    _notes.Rekey(Path.GetFileName(rename.OldPath).ToLowerInvariant(), Path.GetFileName(rename.NewPath).ToLowerInvariant());
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    errors.Add($"{Path.GetFileName(rename.OldPath)}: {ex.Message}");
+                }
+            }
+        }
+
+        AfterChange();
+        StatusMessage = L.F("{0} Datei(en)/Ordner umbenannt.", renames.Count - errors.Count) +
+                        (errors.Count > 0 ? " " + L.F("{0} Fehler: {1}", errors.Count, string.Join("; ", errors.Take(2))) : "") +
+                        " " + UndoHint;
     }
 
     // --- Download watcher --------------------------------------------------------------------------

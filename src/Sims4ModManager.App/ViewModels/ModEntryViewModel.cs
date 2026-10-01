@@ -56,6 +56,17 @@ public partial class ModEntryViewModel : ObservableObject
     [ObservableProperty]
     private bool isFavorite;
 
+    /// <summary>
+    /// 0-based effective load-order position (lowest among the mod's enabled files) - see
+    /// <see cref="Sims4ModManager.Core.LoadOrder.LoadOrderCalculator"/>. Null if disabled or not
+    /// tracked (e.g. nested deeper than the game reads).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LoadOrderLabel))]
+    private int? loadOrderRank;
+
+    public string LoadOrderLabel => LoadOrderRank is { } rank ? "#" + (rank + 1) : "–";
+
     /// <summary>"Always enable together" group name; null if not grouped.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasGroup), nameof(GroupTooltip))]

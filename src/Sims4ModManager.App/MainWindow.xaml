@@ -672,6 +672,9 @@
                                 <DataGrid x:Name="ModsGrid" Grid.Row="1"
                                           ItemsSource="{Binding ModsView}" SelectedItem="{Binding SelectedMod}"
                                           SelectionChanged="ModsGrid_SelectionChanged"
+                                          PreviewMouseLeftButtonDown="ModsGrid_PreviewMouseLeftButtonDown"
+                                          PreviewMouseMove="ModsGrid_PreviewMouseMove"
+                                          AllowDrop="True" DragOver="ModsGrid_DragOver" Drop="ModsGrid_Drop"
                                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                                           IsReadOnly="False" SelectionMode="Extended" SelectionUnit="FullRow" HeadersVisibility="Column"
                                           GridLinesVisibility="None" RowHeight="30">
@@ -861,6 +864,14 @@
                                             <DataGridTextColumn.HeaderStyle>
                                                 <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
                                                     <Setter Property="ToolTip" Value="In wie vielen Bibliothekseinträgen (Haushalte, Grundstücke, Räume) dieser Mod verwendet wird." />
+                                                </Style>
+                                            </DataGridTextColumn.HeaderStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Reihenfolge" Binding="{Binding LoadOrderLabel}" Width="90" IsReadOnly="True"
+                                                            SortMemberPath="LoadOrderRank">
+                                            <DataGridTextColumn.HeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
+                                                    <Setter Property="ToolTip" Value="Tatsächliche Ladereihenfolge (das Spiel liest Dateien und Ordner alphabetisch, verschachtelt). Nach dieser Spalte sortiert lässt sich eine Zeile hierher ziehen, um sie per Nummern-Präfix (000_, 010_, …) umzusortieren – nur innerhalb desselben Ordners." />
                                                 </Style>
                                             </DataGridTextColumn.HeaderStyle>
                                         </DataGridTextColumn>
@@ -1151,6 +1162,12 @@
                                                                         <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                                                     </DockPanel>
                                                                     <TextBlock Text="{Binding Explanation}" Style="{StaticResource CaptionText}" Margin="0,4,0,8" />
+                                                                    <DockPanel Margin="0,0,0,8" Visibility="{Binding HasLoadOrderNote, Converter={StaticResource BoolToVisibility}}">
+                                                                        <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Warning24" Margin="0,0,6,0"
+                                                                                       Foreground="{StaticResource WarningBrush}" VerticalAlignment="Top" />
+                                                                        <TextBlock Text="{Binding LoadOrderNote}" Style="{StaticResource CaptionText}"
+                                                                                   Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" />
+                                                                    </DockPanel>
                                                                     <ui:Button HorizontalAlignment="Left" Icon="{ui:SymbolIcon Checkmark24}"
                                                                                Command="{Binding DataContext.ApplyProposalCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                                                CommandParameter="{Binding}" ToolTip="{Binding ActionTooltip}">

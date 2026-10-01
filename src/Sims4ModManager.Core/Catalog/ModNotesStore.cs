@@ -84,4 +84,21 @@ public sealed class ModNotesStore
         Set(modId, note);
         return note.IsFavorite;
     }
+
+    /// <summary>
+    /// Moves a note from <paramref name="oldId"/> to <paramref name="newId"/> - a mod's ID is just its
+    /// file/folder name, so renaming one (e.g. a load-order prefix change) would otherwise silently
+    /// orphan its note/tags/favorite/group. No-op if there is nothing to move, or if
+    /// <paramref name="newId"/> already has its own note (never overwrites existing data).
+    /// </summary>
+    public void Rekey(string oldId, string newId)
+    {
+        if (string.Equals(oldId, newId, StringComparison.OrdinalIgnoreCase))
+            return;
+        if (!Notes.TryGetValue(oldId, out var note) || Notes.ContainsKey(newId))
+            return;
+        Notes.Remove(oldId);
+        Notes[newId] = note;
+        JsonFile.WriteAtomic(_path, new NotesFile { Notes = Notes });
+    }
 }

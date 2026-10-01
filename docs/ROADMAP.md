@@ -161,13 +161,21 @@ so it stays a live list of open work, not an archive. Suggestions and votes are 
 
 ## Load order & collections
 
-- [ ] Explicit load-order control: the game loads mods alphabetically by path, so overrides between two
-  script mods or two tuning packages are decided by filename today - something the community works
-  around by hand with numeric folder prefixes (`000_`, `010_`, ...). Surface the effective load
-  order in the mod list, let a user drag to reorder (writing the numeric-prefix convention under the
-  hood so it keeps working without the app running), and flag load-order-sensitive conflicts
-  (two mods editing the same tuning where order decides the winner) separately from resource
-  conflicts, where disabling one side is the only fix.
+- [x] Explicit load-order control: a new "Reihenfolge" column in the Mods tab shows each mod's true
+  effective load-order position (`LoadOrderCalculator`: the game scans directories depth-first,
+  merging files and subfolders alphabetically at each level - verified against community testing that
+  resolves a direct contradiction in two other sources, since this couldn't be checked against a real
+  running game from here). Dragging a row onto another renumbers them with the community's numeric-
+  prefix convention (`000_`, `010_`, ...), preferring to rename only the dragged file/folder and
+  falling back to renumbering every sibling only when there's no clean numeric gap to use instead
+  (`LoadOrderReorderPlanner`); restricted to siblings in the same collection folder, since reordering
+  across folders is a bigger, less predictable change better left to the existing "Verschieben …"
+  action. Renaming changes a mod's ID (its file/folder name), so notes/tags/favorites are
+  automatically re-keyed to follow it (`ModNotesStore.Rekey`) - saved profiles referencing the old
+  name are not, and the confirmation dialog says so. Each conflict proposal involving an Override or
+  script-overlap conflict (the two kinds without an automatic "safe" fix) now also flags when the
+  game's real load order would actually pick a different winner than the proposal's file-date-based
+  recommendation (see [CHANGELOG.md](../CHANGELOG.md)).
 - [ ] Shareable mod collections ("modpacks"): package a curated set of mods - by reference (CurseForge
   IDs + versions) rather than the files themselves - into one file a creator or Discord/forum
   community can publish; installing one resolves and downloads every mod (and its dependencies) via

@@ -6,12 +6,28 @@ namespace Sims4ModManager.App.ViewModels;
 /// <summary>A conflict solution as shown in the conflict panel.</summary>
 public sealed class ResolutionProposalViewModel
 {
-    public ResolutionProposalViewModel(ResolutionProposal proposal)
+    public ResolutionProposalViewModel(ResolutionProposal proposal, IReadOnlyDictionary<string, int>? loadOrderRanks = null)
     {
         Model = proposal;
+
+        // Override/script conflicts are exactly the two kinds ConflictResolver.IsSafe excludes from
+        // auto-apply - the two where "which file actually wins" is a real judgment call, and where the
+        // game's own "first loaded wins" rule can disagree with this proposal's file-date heuristic.
+        if (loadOrderRanks is not null && proposal.Kind is ResolutionKind.Override or ResolutionKind.ScriptOverlap
+            && loadOrderRanks.TryGetValue(proposal.Keep.File.AbsolutePath, out int keepRank)
+            && loadOrderRanks.TryGetValue(proposal.Change.File.AbsolutePath, out int changeRank)
+            && changeRank < keepRank)
+        {
+            LoadOrderNote = L.F("Nach der tatsächlichen Ladereihenfolge gewinnt heute eigentlich {0}, nicht {1}.",
+                ConflictResolver.Label(proposal.Change), ConflictResolver.Label(proposal.Keep));
+        }
     }
 
     public ResolutionProposal Model { get; }
+
+    /// <summary>Set when the game's real load order picks a different winner than this proposal's "Keep" file.</summary>
+    public string? LoadOrderNote { get; }
+    public bool HasLoadOrderNote => LoadOrderNote is not null;
 
     public string Title => Model.Title;
     public string Explanation => Model.Explanation;
