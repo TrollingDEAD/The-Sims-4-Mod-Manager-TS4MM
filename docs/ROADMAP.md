@@ -176,13 +176,17 @@ so it stays a live list of open work, not an archive. Suggestions and votes are 
   script-overlap conflict (the two kinds without an automatic "safe" fix) now also flags when the
   game's real load order would actually pick a different winner than the proposal's file-date-based
   recommendation (see [CHANGELOG.md](../CHANGELOG.md)).
-- [ ] Shareable mod collections ("modpacks"): package a curated set of mods - by reference (CurseForge
-  IDs + versions) rather than the files themselves - into one file a creator or Discord/forum
-  community can publish; installing one resolves and downloads every mod (and its dependencies) via
-  the existing CurseForge browse/install pipeline and reports anything only available elsewhere.
-  Mirrors what Nexus/Vortex "Collections" and Mod Organizer 2's profile exports do for other games,
-  and complements the existing portable settings backup (which intentionally excludes the Mods
-  folder itself).
+- [x] Shareable mod collections ("modpacks"): a new "Modpack exportieren …" button (Updates tab) saves
+  the CurseForge mods the last check recognized as a small `.s4mmmodpack.json` file referencing each
+  by project/file ID, not the files themselves - for a creator or Discord/forum community to publish.
+  "Modpack installieren …" resolves every mod and its dependencies (deduplicated across the whole
+  pack, not just per-mod) through the same `CurseForgeDependencyResolver` the Browse tab's install
+  already used (extracted from it, to a public spot in Core so both reuse the exact same dependency-
+  walk/"blocked" logic rather than diverging copies), reports anything no longer found on CurseForge,
+  and - unlike a single Browse install - skips a mod whose author no longer allows third-party
+  downloads instead of aborting the whole pack. Mirrors what Nexus/Vortex "Collections" and Mod
+  Organizer 2's profile exports do for other games, and complements the existing portable settings
+  backup (which intentionally excludes the Mods folder itself) (see [CHANGELOG.md](../CHANGELOG.md)).
 - [ ] "Recreate on a new PC" wizard: given a saved mod list (already exportable as text/CSV) plus the
   CurseForge fingerprint/ID data the app already caches, offer to re-download and reinstall
   everything it recognizes in one pass after a fresh game install, instead of only exporting a list

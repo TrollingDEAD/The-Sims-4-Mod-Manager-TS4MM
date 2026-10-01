@@ -89,6 +89,16 @@ adheres to [Semantic Versioning](https://semver.org/).
   the game's real load order would actually pick a different winner than the proposal's file-date-
   based recommendation. Closes the "explicit load-order control" item from
   [docs/ROADMAP.md](docs/ROADMAP.md#load-order--collections).
+- Shareable mod collections ("modpacks"): a new "Modpack exportieren …" button (Updates tab) saves
+  the CurseForge mods the last check recognized as a small `.s4mmmodpack.json` file referencing each
+  by project/file ID rather than the files themselves - for a creator or Discord/forum community to
+  publish. "Modpack installieren …" resolves every mod and its dependencies (deduplicated across the
+  whole pack) through the same dependency-resolution logic the Browse tab's single-mod install
+  already used - extracted to `CurseForgeDependencyResolver` in Core so both share one implementation
+  instead of diverging copies - reports anything no longer found on CurseForge, and skips (rather
+  than aborting the whole pack over) a mod whose author no longer allows third-party downloads.
+  Closes the "shareable mod collections" item from
+  [docs/ROADMAP.md](docs/ROADMAP.md#load-order--collections).
 - Texture downscaling: a new "Überdimensionierte Texturen" card on the Storage tab flags CAS/object
   DDS textures above 2048×2048 pixels, with a "Verkleinern …" button to downscale them in one
   journaled/undoable step - many CC creators ship 4K textures the game never resolves at typical

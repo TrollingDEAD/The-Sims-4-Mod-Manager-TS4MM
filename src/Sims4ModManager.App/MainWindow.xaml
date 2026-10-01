@@ -2782,6 +2782,12 @@
                                                    Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
                                         <ui:Button DockPanel.Dock="Right" Content="Nach Updates suchen" Icon="{ui:SymbolIcon ArrowSync24}" Appearance="Primary"
                                                    Command="{Binding CheckCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+                                        <ui:Button DockPanel.Dock="Right" Content="Modpack installieren …" Icon="{ui:SymbolIcon ArrowDownload24}" Margin="0,0,6,0"
+                                                   Command="{Binding ImportModpackCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}"
+                                                   ToolTip="Installiert jeden Mod (und seine Abhängigkeiten) aus einer von einem Modpack-Ersteller geteilten Datei, über CurseForge-Referenzen statt der Dateien selbst." />
+                                        <ui:Button DockPanel.Dock="Right" Content="Modpack exportieren …" Icon="{ui:SymbolIcon ArrowExportUp24}" Margin="0,0,6,0"
+                                                   Command="{Binding ExportModpackCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}"
+                                                   ToolTip="Speichert die zuletzt erkannten CurseForge-Mods als Liste von Projekt-/Datei-Referenzen – zum Teilen in Discord/Foren, nicht die Dateien selbst." />
                                         <ui:ProgressRing DockPanel.Dock="Right" IsIndeterminate="True" Width="16" Height="16" Margin="12,0,8,0"
                                                          Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
                                         <TextBlock Text="{Binding BusyText}" Style="{StaticResource CaptionText}" VerticalAlignment="Center"

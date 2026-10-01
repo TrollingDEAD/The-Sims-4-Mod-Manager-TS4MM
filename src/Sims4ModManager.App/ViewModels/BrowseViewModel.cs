@@ -21,7 +21,6 @@ namespace Sims4ModManager.App.ViewModels;
 public partial class BrowseViewModel : ObservableObject
 {
     private const int PageSize = 30;
-    private const int MaxDependencyDepth = 5;
 
     private readonly MainViewModel _main;
     private readonly IDialogService _dialogs;
@@ -183,8 +182,7 @@ public partial class BrowseViewModel : ObservableObject
         if (!await _main.EnsureGameClosedAsync())
             return;
 
-        var rootFile = PickBestFile(vm.Model.LatestFiles);
-        if (rootFile is null)
+        if (CurseForgeDependencyResolver.PickBestFile(vm.Model.LatestFiles) is not { } rootFile)
         {
             await _dialogs.ShowAsync(L.T("Installieren"), L.T("Für dieses Projekt gibt es keine passende Datei."));
             return;
@@ -195,7 +193,7 @@ public partial class BrowseViewModel : ObservableObject
         var downloaded = new List<(string Path, string FileName)>();
         try
         {
-            var (chain, blocked) = await ResolveChainAsync(client, vm.Model, rootFile);
+            var (chain, blocked) = await CurseForgeDependencyResolver.ResolveAsync(client, new[] { (vm.Model, rootFile) });
             if (blocked.Count > 0)
             {
                 await _dialogs.ShowAsync(L.T("Installieren"),
@@ -281,57 +279,6 @@ public partial class BrowseViewModel : ObservableObject
             }
             IsBusy = false;
         }
-    }
-
-    private sealed record ChainEntry(bool IsRoot, long ModId, CurseForgeFile File);
-
-    private static async Task<(List<ChainEntry> Chain, List<CurseForgeMod> Blocked)> ResolveChainAsync(
-        CurseForgeClient client, CurseForgeMod rootMod, CurseForgeFile rootFile)
-    {
-        var chain = new List<ChainEntry> { new(true, rootMod.Id, rootFile) };
-        var blocked = new List<CurseForgeMod>();
-        if (rootMod.AllowModDistribution == false)
-            blocked.Add(rootMod);
-
-        var visited = new HashSet<long> { rootMod.Id };
-        // Always re-fetch the chosen file's full shape: search/list responses may carry a thinner
-        // file object than a direct file lookup, and Dependencies is only reliably populated there.
-        var rootFull = (await client.GetFilesAsync(new[] { rootFile.Id })).FirstOrDefault() ?? rootFile;
-        var frontier = RequiredOrOptionalIds(rootFull.Dependencies).Where(visited.Add).ToList();
-
-        for (int depth = 0; depth < MaxDependencyDepth && frontier.Count > 0; depth++)
-        {
-            var mods = await client.GetModsAsync(frontier);
-            var chosen = mods.Select(m => (Mod: m, File: PickBestFile(m.LatestFiles))).Where(x => x.File is not null).ToList();
-            if (chosen.Count == 0)
-                break;
-            var fullFiles = (await client.GetFilesAsync(chosen.Select(x => x.File!.Id).ToList())).ToDictionary(f => f.Id);
-
-            var nextFrontier = new List<long>();
-            foreach (var (mod, file) in chosen)
-            {
-                var full = fullFiles.GetValueOrDefault(file!.Id, file);
-                chain.Add(new ChainEntry(false, mod.Id, full));
-                if (mod.AllowModDistribution == false)
-                    blocked.Add(mod);
-                nextFrontier.AddRange(RequiredOrOptionalIds(full.Dependencies).Where(visited.Add));
-            }
-            frontier = nextFrontier;
-        }
-        return (chain, blocked);
-    }
-
-    /// <summary>Which dependency relation types get auto-installed: Required (3) and Optional (2) only -
-    /// never EmbeddedLibrary (already inside the file), Tool, Incompatible or Include.</summary>
-    internal static IEnumerable<long> RequiredOrOptionalIds(IEnumerable<CurseForgeFileDependency> dependencies) =>
-        dependencies.Where(d => d.RelationType is 2 or 3).Select(d => d.ModId);
-
-    /// <summary>Release beats beta/alpha, else newest - the same rule CurseForgeUpdateChecker uses for updates.</summary>
-    private static CurseForgeFile? PickBestFile(IReadOnlyList<CurseForgeFile> files)
-    {
-        var available = files.Where(f => f.IsAvailable).ToList();
-        return available.Where(f => f.ReleaseType == 1).OrderByDescending(f => f.FileDate).FirstOrDefault()
-            ?? available.OrderByDescending(f => f.FileDate).FirstOrDefault();
     }
 
     private static void OpenUrl(string? url)
